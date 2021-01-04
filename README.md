@@ -8,11 +8,12 @@ run bot.json with node or nodemon to start the bot.
 config.json lets you set the prefix, might add more stuff to that later, idk.
 index.json contains all the helper methods used in bot.json
 
-Basic commands:
--ping: Self explanatory.
--pasta: TODO.
--d6: Roll a d6.
--4d6: Roll 4d6, shows individual rolls.
--4d6drop1: Roll 4d6, drop 1, show sum.
--rollstats: Roll 4d6, drop 1, times 6. Displays each total.
--help: sends you here, lmao.
+<h1>Basic commands:</h1>
+
+* ping: Self explanatory.
+* pasta: TODO.
+* d6: Roll a d6.
+* 4d6: Roll 4d6, shows individual rolls.
+* 4d6drop1: Roll 4d6, drop 1, show sum.
+* rollstats: Roll 4d6, drop 1, times 6. Displays each total.
+* help: Sends you here, lmao.
