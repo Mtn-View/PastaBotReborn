@@ -16,5 +16,6 @@ index.json contains all the helper methods used in bot.json
 * 4d6: Roll 4d6, shows individual rolls.
 * 4d6drop1: Roll 4d6, drop 1, show sum.
 * rollstats: Roll 4d6, drop 1, times 6. Displays each total.
-* secret: Sends a random* secret from Icewind Dale: Rime of the Frostmaiden. *As of writing, the same secret is sent every time
+* secret: Sends a random secret from Icewind Dale: Rime of the Frostmaiden.
+  * asfasdf
 * help: Sends you here, lmao.
