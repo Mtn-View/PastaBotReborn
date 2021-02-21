@@ -17,5 +17,13 @@ index.json contains all the helper methods used in bot.json
 * 4d6drop1: Roll 4d6, drop 1, show sum.
 * rollstats: Roll 4d6, drop 1, times 6. Displays each total.
 * secret: Sends a random secret from Icewind Dale: Rime of the Frostmaiden.
-  * asfasdf
+  * draw - draw a secret
+  * redraw - return your all your secrets to the deck, and draw a new one
+  * unclaim - return all your secrets to the deck
+  * count - check how many secrets you have
+  * Owner only commands:
+  * enable - allow drawing of secrets
+  * disable - dissallow drawing of secrets
+  * remaining - show how many secrets are left in the deck
+  * restore - restore from `SecretListBackup.json` in case of catastrophic database failure
 * help: Sends you here, lmao.
