@@ -22,8 +22,8 @@ index.json contains all the helper methods used in bot.json
   * unclaim - return all your secrets to the deck
   * count - check how many secrets you have
   * Owner only commands:
-  * enable - allow drawing of secrets
-  * disable - dissallow drawing of secrets
-  * remaining - show how many secrets are left in the deck
-  * restore - restore from `SecretListBackup.json` in case of catastrophic database failure
+   * enable - allow drawing of secrets
+   * disable - dissallow drawing of secrets
+   * remaining - show how many secrets are left in the deck
+   * restore - restore from `SecretListBackup.json` in case of catastrophic database failure
 * help: Sends you here, lmao.
