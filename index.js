@@ -1,6 +1,5 @@
 const fs = require('fs')
 const { ownerID } = require('./config.json')
-const secretJSONPath = `./secrets/SecretList.json`
 var methods = {
 	rolldx(x) {
 		return Math.ceil(Math.random() * x)
@@ -56,12 +55,21 @@ var methods = {
 		fs.writeFile(jsonFilePath, JSON.stringify(jsonObject, null, 4), err =>{
 			if (err) {
 				console.error(`Error writing file: ${err}`)
+				return false
 			}
 		})
+		return true
 	},
-	backupJSON(jsonReadPath, jsonWritePath) {
-		let jsonString = fs.readFileSync(jsonReadPath, `utf8`)
-		this.writeToJSON(jsonWritePath, JSON.parse(jsonString))
+	// reads a json file and writes its contents to another
+	copyJSON(jsonReadPath, jsonWritePath) {
+		try {
+			let jsonString = fs.readFileSync(jsonReadPath, `utf8`)
+			this.writeToJSON(jsonWritePath, JSON.parse(jsonString))
+			return true
+		} catch (err) {
+			console.log(err)
+			return false
+		}
 	},
 	getGuildMemberPromiseByID(message, id) {
 		if (message.guild.available) {
@@ -69,6 +77,15 @@ var methods = {
 				return message.guild.members.fetch(id)
 			}
 		}
+	},
+	checkJSONPath(path) {
+		if (!path.includes('secrets/')) {
+			path = 'secrets/'.concat(path)
+		}
+		if (!path.includes('.json')) {
+			path = path.concat('.json')
+		}
+		return path
 	},
 	getNicknameByID(message, id) {
 		this.getGuildMemberPromiseByID(message, id).then(gm =>{

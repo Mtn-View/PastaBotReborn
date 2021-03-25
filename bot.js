@@ -85,6 +85,7 @@ bot.on('message', message => {
 				break
                 // should definitely refactor code and put different modules into different js files
 			case 'secret':
+			case 'secrets':
                 let isOwner = index.checkOwner(message.author.id)
                 if (args[0] === 'reset' && isOwner) {
                     ch.send(`Resetting all secrets... :arrows_counterclockwise:`)
@@ -104,15 +105,31 @@ bot.on('message', message => {
                 } else if (args[0] === 'remaining' && isOwner) {
                     ch.send(`There are ${secret.getSecretsRemaining()} unclaimed secrets remaining.`)
 				} else if (args[0] === 'restore' && isOwner) {
-                    secret.restoreBackupSecretJSON()
-                    ch.send(`Restored database to initial state.`)
-                } else if (args[0] === 'backup') {
-					let written = secret.backupSecretJSON(args[1])
-					if (written) {
-						ch.send(`Successfully written to \`${written}\``)
+                    let restorePath = secret.restoreBackupSecretJSON(args[1])
+					if (restorePath) {
+						ch.send(`Restored database from \`${restorePath}\`.`)
+					} else {
+						ch.send(`:thinking: Error restoring database from file...`)
+					}
+                } else if (args[0] === 'backup' && isOwner) {
+					let writePath = secret.backupSecretJSON(args[1])
+					if (writePath) {
+						ch.send(`Successfully written to \`${writePath}\``)
 					} else {
 						ch.send(`Backup successfully failed. No really. It didn't work. IDK why. I'm too lazy to write code to check how you fucked this up.`)
 					}
+                } else if (args[0] === 'all' && isOwner) {
+					ch.send("Revealing everyone's secrets... Privately. :eyes:")
+					secret.getAllClaimedSecrets(message)
+						.then(result => {
+							if (result) {
+								message.author.send(result)
+								console.log(`s${result}s`)
+							} else {
+								message.author.send("FUCK")
+								console.log(`s${result}s`)
+							}
+						})
                 } else if (args[0] === 'redraw') {
                     let numSecretsRemoved = secret.removeSecretByUserID(message.author.id)
                     if (numSecretsRemoved > 0) {
@@ -130,10 +147,7 @@ bot.on('message', message => {
                     ch.send(`You have ${secret.getNumberSecretsClaimedByAuthor(message)} secrets.`)
                 } else if (args[0] === 'draw') {
                     secret.sendSecret(message, ch, Discord)
-				} else if (args[0] === 'all' && isOwner) {
-					ch.send("Revealing everyone's secrets... Privately. :eyes:")
-					console.log(`s${ secret.getAllClaimedSecrets(message)}s`)
-                } else if (!args[0]) { // Default secret command with no args
+				} else if (!args[0]) { // Default secret command with no args
                     ch.send(`Use \`${prefix}secret draw\` to draw a secret, or \`${prefix}help\` for help.`)
                 } else { // just in case they fuck it up or try and reset without permissions
                     ch.send(`Unknown command \`${args}\` or insufficient permissions.`)

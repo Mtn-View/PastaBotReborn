@@ -1,6 +1,9 @@
 const secretJSONPath = `./secrets/SecretList.json`
+const secretBackupJSONPath = `./secrets/SecretListBackup.json`
 const index = require('./index.js')
 const fs = require('fs')
+const { rejects } = require('assert')
+const { resolve } = require('path')
 
 // contains all the methods used in the secret function
 var methods = {
@@ -107,7 +110,15 @@ var methods = {
 				})
 			}
 		})
-		return allSecrets
+		return new Promise((resolve, reject) => {
+			// if (allSecrets) {
+			// 	resolve(allSecrets)
+			// } else {
+			// 	console.log(allSecrets)
+			// 	reject("ope")
+			// }
+			resolve(allSecrets)
+		})
 	},
 	getAllClaimedSecretIDs() {
 		let secretListJSON = this.loadSecretsJSON()
@@ -132,23 +143,30 @@ var methods = {
 		secretListJSON.unclaimed = 17
 		index.writeToJSON(secretJSONPath, secretListJSON)
 	},
-	restoreBackupSecretJSON() {
-		let jsonString = fs.readFileSync(`./secrets/SecretListBackup.json`, `utf8`)
-		let secretListBackupJSON = JSON.parse(jsonString)
-		index.writeToJSON(secretJSONPath, secretListBackupJSON)
+	restoreBackupSecretJSON(readPath) {
+		if (readPath) {
+			readPath = index.checkJSONPath(readPath)
+		} else {
+			readPath = secretBackupJSONPath
+		}
+		console.log(readPath)
+		// let jsonString = fs.readFileSync(readPath, `utf8`)
+		// let secretListBackupJSON = JSON.parse(jsonString)
+		// index.writeToJSON(secretJSONPath, secretListBackupJSON)
+		let success = index.copyJSON(readPath, secretJSONPath)
+		if (success) {
+			return readPath
+		}
+		return false
 	},
 	backupSecretJSON(writePath) {
 		if (writePath) {
-			if (!writePath.includes('secrets/')) {
-				writePath = 'secrets/'.concat(writePath)
-			}
-			if (!writePath.includes('.json')) {
-				writePath = writePath.concat('.json')
-			}
-			index.backupJSON(secretJSONPath, writePath)
+			writePath = index.checkJSONPath(writePath)
+			index.copyJSON(secretJSONPath, writePath)
 			return writePath
 		}
 		return false
 	},
 }
 module.exports = methods
+
