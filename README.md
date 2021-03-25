@@ -1,4 +1,4 @@
-Hello this is my bot, I only worked on it for like three hours so it does all of three things basically. 
+Hello this is my bot, I only worked on it for like three hours so it does all of three things basically.
 I don't remember the command to fetch the dependencies and it's almost 5am so I'm going to save that for later if I remember how to do that.
 Also add your discord bot's token to "auth.json" to get it to work with your bot.
 I also really don't know how to use git that well so hopefully this works well enough.
@@ -25,6 +25,8 @@ index.json contains all the helper methods used in bot.json
   * Owner only commands:
     * enable - allow drawing of secrets
     * disable - dissallow drawing of secrets
+	* reset - reset `SecretList.json` to its default values. (For all secrets, `taken = false`, `takenByID = ""`, `takenUsername = ""`)
     * remaining - show how many secrets are left in the deck
-    * restore - restore from `SecretListBackup.json` in case of catastrophic database failure
-* help: Sends you here, lmao.
+	* all - all claimed secrets and their owner to the console. Owner PM TODO, promises are heck.
+	* backup - back up the current `SecretList.json` to the specified file.
+    * restore - restore from specified file, or if not specified, from `SecretListBackup.json`.
