@@ -1,0 +1,6 @@
+
+node_modules/
+auth.json
+config.json
+secrets/*
+!secrets/SecretListBackup_template.json

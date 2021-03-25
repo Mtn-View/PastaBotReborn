@@ -1,50 +1,101 @@
+const fs = require('fs')
+const { ownerID } = require('./config.json')
+const secretJSONPath = `./secrets/SecretList.json`
 var methods = {
-	rolldx : function(x) {
-		return Math.ceil(Math.random()*x);
+	rolldx(x) {
+		return Math.ceil(Math.random() * x)
 	},
-	rollxdy : function(x,y) { //will return array of rolls and sum in an object
-		let rolls = new Array();
-		let sum = 0;
-		for(let i = 0; i < x; i++){
-			rolls[i] = this.rolldx(y);
-			sum += rolls[i];
+	rollxdy(x, y) { //will return array of rolls and sum in an object
+		let rolls = new Array()
+		let sum = 0
+		for (let i = 0; i < x; i++) {
+			rolls[i] = this.rolldx(y)
+			sum += rolls[i]
 		}
 		let obj = {
-			rolls: rolls,
-			sum: sum
-		};
-		return obj;
+			rolls,
+			sum,
+		}
+		return obj
 	},
-	rollxdydropz : function(x,y,z) {
-		let rolls = this.rollxdy(x,y).rolls; // Syntax?
-		let dropped = new Array();
-		let sum = 0;
-		
-		rolls.sort(); // sort ascending order
-		let allRolls = Array.from(rolls);
-		for(let i = 0; i < z; i++){
-			dropped[i] = rolls.shift(); // moves dropped rolls from 'rolls' to 'dropped'
+	rollxdydropz(x, y, z) {
+		let rolls = this.rollxdy(x, y).rolls // Syntax?
+		let dropped = new Array()
+		let sum = 0
+
+		rolls.sort() // sort ascending order
+		let allRolls = Array.from(rolls)
+		for (let i = 0; i < z; i++) {
+			dropped[i] = rolls.shift() // moves dropped rolls from 'rolls' to 'dropped'
 		}
 		//let sum = rolls => rolls.reduce((a,b) => a + b, 0); // how is this supposed to work?
-		for(i = 0; i < x-z; i++){
-			sum += rolls[i];
+		for (let i = 0; i < x - z; i++) {
+			sum += rolls[i]
 		}
 		let ret = {
-			allRolls: allRolls,
-			rolls: rolls,
-			dropped: dropped,
-			sum: sum
-		};
-		//console.log(ret);
-		return ret;
-	},
-	rollArray : function(x){ 
-		let stats = new Array();
-		for(let i = 0; i < x; i++){
-			stats[i] = this.rollxdydropz(4,x,1);
+			allRolls,
+			rolls,
+			dropped,
+			sum,
 		}
-		stats.sort((a,b) => (a.sum > b.sum) ? 1 : -1);
-		return stats;
+		//console.log(ret);
+		return ret
 	},
-};
-module.exports = methods;
+	rollArray(x) {
+		let stats = new Array()
+		for (let i = 0; i < x; i++) {
+			stats[i] = this.rollxdydropz(4, x, 1)
+		}
+		stats.sort((a, b) => (a.sum < b.sum) ? 1 : -1)
+		return stats
+	},
+	checkOwner(id) {
+		return (id === ownerID)
+	},
+	writeToJSON(jsonFilePath, jsonObject) {
+		fs.writeFile(jsonFilePath, JSON.stringify(jsonObject, null, 4), err =>{
+			if (err) {
+				console.error(`Error writing file: ${err}`)
+			}
+		})
+	},
+	backupJSON(jsonReadPath, jsonWritePath) {
+		let jsonString = fs.readFileSync(jsonReadPath, `utf8`)
+		this.writeToJSON(jsonWritePath, JSON.parse(jsonString))
+	},
+	getGuildMemberPromiseByID(message, id) {
+		if (message.guild.available) {
+			if (id) {
+				return message.guild.members.fetch(id)
+			}
+		}
+	},
+	getNicknameByID(message, id) {
+		this.getGuildMemberPromiseByID(message, id).then(gm =>{
+			if (gm) {
+				let nick = gm.nickname
+				if (nick) {
+					return nick
+				}
+				let username = gm.user.username
+				return username
+			}
+		})
+	},
+	getNicknameByGM(gm) {
+		if (gm) {
+			let nick = gm.nickname
+			if (nick) {
+				return nick
+			}
+			let username = gm.user.username
+			return username
+		}
+	},
+	printAllGuildMembers(message) {
+		message.guild.members.fetch({ force: true }).then(m =>{
+			return m
+		})
+	},
+}
+module.exports = methods
