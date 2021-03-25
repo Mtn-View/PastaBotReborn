@@ -103,7 +103,10 @@ bot.on('message', message => {
                     }
                 } else if (args[0] === 'remaining' && isOwner) {
                     ch.send(`There are ${secret.getSecretsRemaining()} unclaimed secrets remaining.`)
-				} else if (args[0] === 'backup') {
+				} else if (args[0] === 'restore' && isOwner) {
+                    secret.restoreBackupSecretJSON()
+                    ch.send(`Restored database to initial state.`)
+                } else if (args[0] === 'backup') {
 					let written = secret.backupSecretJSON(args[1])
 					if (written) {
 						ch.send(`Successfully written to \`${written}\``)
@@ -125,9 +128,6 @@ bot.on('message', message => {
                     ch.send(`Unclaimed all your secrets.`)
                 } else if (args[0] === 'count') {
                     ch.send(`You have ${secret.getNumberSecretsClaimedByAuthor(message)} secrets.`)
-                } else if (args[0] === 'restore' && isOwner) {
-                    secret.restoreBackupSecretJSON()
-                    ch.send(`Restored database to initial state.`)
                 } else if (args[0] === 'draw') {
                     secret.sendSecret(message, ch, Discord)
 				} else if (args[0] === 'all' && isOwner) {
