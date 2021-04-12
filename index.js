@@ -1,64 +1,32 @@
 const fs = require('fs')
 const { ownerID } = require('./config.json')
-var methods = {
-	rolldx(x) {
-		return Math.ceil(Math.random() * x)
-	},
-	rollxdy(x, y) { //will return array of rolls and sum in an object
-		let rolls = new Array()
-		let sum = 0
-		for (let i = 0; i < x; i++) {
-			rolls[i] = this.rolldx(y)
-			sum += rolls[i]
-		}
-		let obj = {
-			rolls,
-			sum,
-		}
-		return obj
-	},
-	rollxdydropz(x, y, z) {
-		let rolls = this.rollxdy(x, y).rolls // Syntax?
-		let dropped = new Array()
-		let sum = 0
 
-		rolls.sort() // sort ascending order
-		let allRolls = Array.from(rolls)
-		for (let i = 0; i < z; i++) {
-			dropped[i] = rolls.shift() // moves dropped rolls from 'rolls' to 'dropped'
-		}
-		//let sum = rolls => rolls.reduce((a,b) => a + b, 0); // how is this supposed to work?
-		for (let i = 0; i < x - z; i++) {
-			sum += rolls[i]
-		}
-		let ret = {
-			allRolls,
-			rolls,
-			dropped,
-			sum,
-		}
-		//console.log(ret);
-		return ret
-	},
-	rollArray(x) {
-		let stats = new Array()
-		for (let i = 0; i < x; i++) {
-			stats[i] = this.rollxdydropz(4, x, 1)
-		}
-		stats.sort((a, b) => (a.sum < b.sum) ? 1 : -1)
-		return stats
-	},
+var methods = {
 	checkOwner(id) {
 		return (id === ownerID)
 	},
-	writeToJSON(jsonFilePath, jsonObject) {
-		fs.writeFile(jsonFilePath, JSON.stringify(jsonObject, null, 4), err =>{
+	async writeToJSON(jsonFilePath, jsonObject) {
+		jsonFilePath = this.checkJSONExtension(jsonFilePath, '')
+		await fs.writeFile(jsonFilePath, JSON.stringify(jsonObject, null, 4), err =>{
 			if (err) {
 				console.error(`Error writing file: ${err}`)
 				return false
 			}
 		})
 		return true
+	},
+	loadFromJSON(path) {
+		path = this.checkJSONExtension(path)
+		if (fs.existsSync(path)) {
+			let jsonString = fs.readFileSync(path, `utf8`)
+			try {
+				return JSON.parse(jsonString)
+			} catch (err) {
+				console.error(err)
+				return false
+			}
+		}
+		return false
 	},
 	// reads a json file and writes its contents to another
 	copyJSON(jsonReadPath, jsonWritePath) {
@@ -67,18 +35,25 @@ var methods = {
 			this.writeToJSON(jsonWritePath, JSON.parse(jsonString))
 			return true
 		} catch (err) {
-			console.log(err)
+			console.log(`copy err:\n${err}`)
 			return false
 		}
 	},
-	getGuildMemberPromiseByID(message, id) {
+	// works
+	async getGuildMemberByID(message, id) {
 		if (message.guild.available) {
 			if (id) {
-				return message.guild.members.fetch(id)
+				return await message.guild.members.fetch(id)
 			}
 		}
 	},
-	checkJSONPath(path) {
+	checkJSONExtension(path) {
+		if (!path.includes('.json')) {
+			path = path.concat('.json')
+		}
+		return path
+	},
+	checkJSONExtPath(path, directory) {
 		if (!path.includes('secrets/')) {
 			path = 'secrets/'.concat(path)
 		}
@@ -87,8 +62,9 @@ var methods = {
 		}
 		return path
 	},
+	// Definitely does not work
 	getNicknameByID(message, id) {
-		this.getGuildMemberPromiseByID(message, id).then(gm =>{
+		this.getGuildMemberByID(message, id).then(gm =>{
 			if (gm) {
 				let nick = gm.nickname
 				if (nick) {
@@ -99,7 +75,8 @@ var methods = {
 			}
 		})
 	},
-	getNicknameByGM(gm) {
+	// Returns a guild member's nickname, or if they have none, their username.
+	getNicknameByGuildMember(gm) {
 		if (gm) {
 			let nick = gm.nickname
 			if (nick) {
@@ -109,10 +86,8 @@ var methods = {
 			return username
 		}
 	},
-	printAllGuildMembers(message) {
-		message.guild.members.fetch({ force: true }).then(m =>{
-			return m
-		})
+	async printAllGuildMembers(message) {
+		return await message.guild.members.fetch({ force: true })
 	},
 }
 module.exports = methods

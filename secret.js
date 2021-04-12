@@ -1,16 +1,98 @@
 const secretJSONPath = `./secrets/SecretList.json`
 const secretBackupJSONPath = `./secrets/SecretListBackup.json`
 const index = require('./index.js')
+const roll = require('./roll.js')
 const fs = require('fs')
-const { rejects } = require('assert')
-const { resolve } = require('path')
+const { prefix } = require('./config.json')
 
+let totalNumSecrets = 17
 // contains all the methods used in the secret function
 var methods = {
+	catchCommand(discord, message, args) {
+		let ch = message.channel
+		let isOwner = index.checkOwner(message.author.id)
+		// reset
+		if (args[0] === 'reset' && isOwner) {
+			ch.send(`Resetting all secrets... :arrows_counterclockwise:`)
+			this.resetAllSecrets()
+		// enable
+		} else if (args[0] === 'enable' && isOwner) {
+			if (this.allowSecretDraws(true)) {
+				ch.send(`Secret draws enabled. :shushing_face:`)
+			} else {
+				ch.send(`Failed to enable secret draws...?`)
+			}
+		// disable
+		} else if (args[0] === 'disable' && isOwner) {
+			if (!this.allowSecretDraws(false)) {
+				ch.send(`Secret draws disabled. :no_entry_sign:`)
+			} else {
+				ch.send(`Failed to disable secret draws...?`)
+			}
+		// remaining
+		} else if (args[0] === 'remaining' && isOwner) {
+			ch.send(`There are ${this.getSecretsRemaining()} unclaimed secrets remaining.`)
+		} else if (args[0] === 'restore' && isOwner) {
+			let restorePath = this.restoreBackupSecretJSON(args[1])
+			if (restorePath) {
+				ch.send(`Restored database from \`${restorePath}\`.`)
+			} else {
+				ch.send(`:thinking: Error restoring database from file...`)
+			}
+		// backup
+		} else if (args[0] === 'backup' && isOwner) {
+			let writePath = this.backupSecretJSON(args[1])
+			if (writePath) {
+				ch.send(`Successfully written to \`${writePath}\``)
+			} else {
+				ch.send(`Backup successfully failed. No really. It didn't work. IDK why. I'm too lazy to write code to check how you fucked this up.`)
+			}
+		// all
+		} else if (args[0] === 'all' && isOwner) {
+			ch.send("Revealing everyone's secrets... Privately. :eyes:")
+			this.getAllClaimedSecrets(message)
+				.then(result => {
+					if (result) {
+						message.author.send(result)
+						console.log(`s${result}s`)
+					} else {
+						message.author.send("FUCK")
+						console.log(`s${result}s`)
+					}
+				})
+		// redraw
+		} else if (args[0] === 'redraw') {
+			let numSecretsRemoved = this.removeSecretByUserID(message.author.id)
+			if (numSecretsRemoved > 0) {
+				ch.send(`Redrawing your secret... One moment, please... :timer:`)
+			} else {
+				ch.send(`You don't have any secrets to redraw! Redrawing anyways... One moment, please... :timer:`)
+			}
+			setTimeout(() => {
+				this.sendSecret(message, ch, discord)
+			}, 2000)
+		// unclaim
+		} else if (args[0] === 'unclaim') { // move into a method so it can check if it's enabled better
+			this.removeSecretByUserID(message.author.id)
+			ch.send(`Unclaimed all your secrets.`)
+		// count
+		} else if (args[0] === 'count') {
+			ch.send(`You have ${this.getNumberSecretsClaimedByAuthor(message)} secrets.`)
+		// draw
+		} else if (args[0] === 'draw') {
+			this.sendSecret(message, ch, discord)
+		// "default"
+		} else if (!args[0]) { // Default secret command with no args
+			ch.send(`Use \`${prefix}secret draw\` to draw a secret, or \`${prefix}help\` for help.`)
+		} else { // just in case they fuck it up or try and reset without permissions
+			ch.send(`Unknown command \`${args}\` or insufficient permissions.`)
+		}
+	},
 	loadSecretsJSON() {
-		let jsonString = fs.readFileSync(secretJSONPath, `utf8`)
-		let secretListJSON = JSON.parse(jsonString)
-		return secretListJSON
+		// let jsonString = fs.readFileSync(secretJSONPath, `utf8`)
+		// let secretListJSON = JSON.parse(jsonString)
+		// return secretListJSON
+		return index.loadFromJSON(secretJSONPath)
 	},
 	allowSecretDraws(allow) {
 		let jsonString = fs.readFileSync(secretJSONPath, `utf8`)
@@ -23,44 +105,45 @@ var methods = {
 		index.writeToJSON(secretJSONPath, secretListJSON)
 		return secretListJSON.allowDraws
 	},
-	getRandomSecret(msg) {
+	async getRandomSecret(msg) {
 		let takenByID = msg.author.id
 		let secretListJSON = this.loadSecretsJSON()
 		// Only return a secret if drawing secrets is allowed.
 		if (secretListJSON.allowDraws === true && secretListJSON.unclaimed > 0) {
-			let fileNum = index.rolldx(17) - 1
+			let fileNum = roll.rolldx(totalNumSecrets) - 1
 			let secretObject = secretListJSON.secrets[fileNum]
 			// Do not choose a  secret that's already taken
 			while (secretObject.taken != false && secretListJSON.unclaimed > 0) {
-				fileNum = index.rolldx(17) - 1
+				fileNum = roll.rolldx(totalNumSecrets) - 1
 				secretObject = secretListJSON.secrets[fileNum]
 			}
 			// mark this secret as taken
 			secretListJSON.secrets[fileNum].taken = true
 			secretListJSON.unclaimed--
+			// record whose secret this is
 			secretObject.takenID = takenByID
-			secretObject.takenUsername = msg.author.username
-			if (msg.member.nickname) {
-				secretObject.takenUsername = msg.member.nickname
-			}
-			console.log(`${secretListJSON.unclaimed} left unclaimed.`)
+			secretObject.takenUsername = index.getNicknameByGuildMember(msg.member)
+
+			console.log(`${secretListJSON.unclaimed} secrets left unclaimed.`)
 			// write out and return
-			index.writeToJSON(secretJSONPath, secretListJSON)
+			await index.writeToJSON(secretJSONPath, secretListJSON)
 			return secretObject
 		}
 		// return false if no secrets remaining
 		return null
 	},
-	sendSecret(message, channel, discord) {
-		let secretObject = this.getRandomSecret(message)
+	async sendSecret(message, channel, discord) {
+		let secretObject = await this.getRandomSecret(message)
+		// let numSecretsOwned = this.getNumberSecretsClaimedByAuthor(message)
 		if (secretObject) {
-			console.log(secretObject)
+			console.log(`secret object: ${secretObject}`)
 			let secretEmbed = new discord.MessageEmbed()
 				.setTitle(secretObject.name)
 				.setDescription(secretObject.desc)
 				.attachFiles(`./secrets/${secretObject.path}`)
 				.setImage(`attachment://${secretObject.path}`)
 			channel.send(`I've sent you your secret... :eyes:`)
+			// message.author.send(`You have ${numSecretsOwned} secret(s).`)
 			message.author.send(secretEmbed)
 		} else if (this.getSecretsRemaining() <= 0) {
 			channel.send(`No secrets remaining.`)
@@ -98,27 +181,20 @@ var methods = {
 		let secretListJSON = this.loadSecretsJSON()
 		return secretListJSON.unclaimed
 	},
-	getAllClaimedSecrets(message) {
+	async getAllClaimedSecrets(message) {
 		let secretListJSON = this.loadSecretsJSON()
 		let allSecrets = ""
 		this.testout = ""
-		secretListJSON.secrets.forEach(s => {
+		// await secretListJSON.secrets.forEach(s => {
+		for (const s of secretListJSON.secrets) {
 			if (s.takenID) {
-				index.getGuildMemberPromiseByID(message, s.takenID).then(gm => {
-					console.log(`${index.getNicknameByGM(gm)} has the secret ${s.name}`)
-					allSecrets += `${index.getNicknameByGM(gm)} has the secret ${s.name}\n`
-				})
+				console.log(`taken by: ${ s.takenID}`)
+				let mem = await index.getGuildMemberByID(message, s.takenID)
+				console.log(`${index.getNicknameByGuildMember(mem)} has the secret ${s.name}`)
+				allSecrets += `${index.getNicknameByGuildMember(mem)} has the secret ${s.name}\n`
 			}
-		})
-		return new Promise((resolve, reject) => {
-			// if (allSecrets) {
-			// 	resolve(allSecrets)
-			// } else {
-			// 	console.log(allSecrets)
-			// 	reject("ope")
-			// }
-			resolve(allSecrets)
-		})
+		}
+		return allSecrets
 	},
 	getAllClaimedSecretIDs() {
 		let secretListJSON = this.loadSecretsJSON()
@@ -140,16 +216,16 @@ var methods = {
 			s.takenID = ""
 			s.takenUsername = ""
 		})
-		secretListJSON.unclaimed = 17
+		secretListJSON.unclaimed = totalNumSecrets
 		index.writeToJSON(secretJSONPath, secretListJSON)
 	},
 	restoreBackupSecretJSON(readPath) {
 		if (readPath) {
-			readPath = index.checkJSONPath(readPath)
+			readPath = index.checkJSONExtPath(readPath, 'secrets/')
 		} else {
 			readPath = secretBackupJSONPath
 		}
-		console.log(readPath)
+		console.log(`reading from path: ${ readPath}`)
 		// let jsonString = fs.readFileSync(readPath, `utf8`)
 		// let secretListBackupJSON = JSON.parse(jsonString)
 		// index.writeToJSON(secretJSONPath, secretListBackupJSON)
@@ -161,7 +237,7 @@ var methods = {
 	},
 	backupSecretJSON(writePath) {
 		if (writePath) {
-			writePath = index.checkJSONPath(writePath)
+			writePath = index.checkJSONExtPath(writePath, 'secrets/')
 			index.copyJSON(secretJSONPath, writePath)
 			return writePath
 		}

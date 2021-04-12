@@ -1,20 +1,20 @@
 {
-  "name": "shitposterbot",
-  "version": "1.0.0",
-  "description": "Dad bot took away pasta mode, and therefore I have been radicalized.",
-  "main": "bot.js",
-  "author": "Mountain View",
-  "dependencies": {
-    "discord.io": "https://github.com/woor/discord.io/tarball/gateway_v6",
-    "discord.js": "^12.5.1",
-    "nodemon": "^2.0.7",
-    "winston": "^3.3.3"
-  },
-  "devDependencies": {},
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node bot.js",
-    "startdev": "nodemon bot.js --ignore secrets/"
-  },
-  "license": "ISC"
+	"name": "shitposterbot",
+	"version": "1.0.0",
+	"description": "Dad bot took away pasta mode, and therefore I have been radicalized.",
+	"main": "bot.js",
+	"author": "Mountain View",
+	"dependencies": {
+		"discord.io": "https://github.com/woor/discord.io/tarball/gateway_v6",
+		"discord.js": "^12.5.1",
+		"nodemon": "^2.0.7",
+		"winston": "^3.3.3"
+	},
+	"devDependencies": {},
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"start": "node bot.js cum",
+		"startdev": "nodemon bot.js --ignore secrets/ --ignore rolls/ -- dev"
+	},
+	"license": "ISC"
 }
