@@ -12,10 +12,9 @@ index.json contains all the helper methods used in bot.json
 
 * ping: Self explanatory.
 * pasta: TODO.
-* d6: Roll a d6.
-* 4d6: Roll 4d6, shows individual rolls.
-* 4d6drop1: Roll 4d6, drop 1, show sum.
-* rollstats: Roll 4d6, drop 1, times 6. Displays each total.
+* roll: various dice rolling commands
+  * stats - rolls a standard 4d6 drop 1 * 6 array for D&D 5e.
+  * xdy - roll an arbitrary x number of y sided dice and return the result. Better output TODO.
 * secret: Sends a random secret from Icewind Dale: Rime of the Frostmaiden.
   * Player commands: (owner must enable secrets)
     * draw - draw a secret
@@ -30,3 +29,9 @@ index.json contains all the helper methods used in bot.json
 	* all - all claimed secrets and their owner to the console. Owner PM TODO, promises are heck.
 	* backup - back up the current `SecretList.json` to the specified file.
     * restore - restore from specified file, or if not specified, from `SecretListBackup.json`.
+
+<h1>Usage:</h1>
+`npm run startdev` to start the bot with nodemon and update the bot status to say it's in development.
+`npm run start` to start the bot with node, and give the normal status message.
+
+Before using the secret feature, you'll have to populate the fields yourself because I'm not about to distribute WOTC content on my GitHub.
