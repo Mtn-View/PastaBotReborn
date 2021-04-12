@@ -37,7 +37,7 @@ bot.once('ready', () => {
 			status: 'online',
 			activity: {
 				name: 'the call of the void',
-				type: 'WATCHING',
+				type: 'LISTENING',
 			},
 		})
 	}
