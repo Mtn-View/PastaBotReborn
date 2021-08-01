@@ -45,6 +45,6 @@ Stuff I want to add to this bot, but have been too lazy to do yet.
 * Command hints / slash commands.
 * Randomly changing names from a list, specified in JSON or something.
 * Server/guild-specific storage / paramters
-* * Bot channel
-* * Separate folders for stored stuff like secrets
-* * Macros
+	* Bot channel
+	* Separate folders for stored stuff like secrets
+	* Macros
