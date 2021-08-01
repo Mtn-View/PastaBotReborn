@@ -37,7 +37,9 @@ index.json contains all the helper methods used in bot.json
 Before using the secret feature, you'll have to populate the fields yourself because I'm not about to distribute WOTC content on my GitHub.
 
 <h1>TODO</h1>
+
 Stuff I want to add to this bot, but have been too lazy to do yet.
+
 * Make the asynchronous stuff not terrible since I actually know some JS now.
 * Create and run macros to have this but call other multi-argument bot commands with one command.
 * Command hints / slash commands.
