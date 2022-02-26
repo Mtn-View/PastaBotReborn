@@ -1,9 +1,9 @@
 const fs = require('fs')
-const { ownerID } = require('./config.json')
+const { ownerId } = require('./config.json')
 
 var methods = {
 	checkOwner(id) {
-		return (id === ownerID)
+		return (id === ownerId)
 	},
 	async writeToJSON(jsonFilePath, jsonObject) {
 		jsonFilePath = this.checkJSONExtension(jsonFilePath, '')

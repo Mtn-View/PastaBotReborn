@@ -5,16 +5,19 @@
 	"main": "bot.js",
 	"author": "Mountain View",
 	"dependencies": {
-		"discord.io": "https://github.com/woor/discord.io/tarball/gateway_v6",
-		"discord.js": "^12.5.1",
+		"@discordjs/builders": "^0.6.0",
+		"@discordjs/rest": "^0.1.0-canary.0",
+		"@discordjs/voice": "github:discordjs/voice",
+		"discord-api-types": "^0.23.1",
+		"discord.js": "^13.1.0",
 		"nodemon": "^2.0.7",
 		"winston": "^3.3.3"
 	},
-	"devDependencies": {},
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"start": "node bot.js cum",
-		"startdev": "nodemon bot.js --ignore secrets/ --ignore rolls/ -- dev"
+		"startdev": "nodemon bot.js --ignore secrets/ --ignore rolls/ -- dev",
+		"deployCommands": "node ./deploy-commands.js"
 	},
 	"license": "ISC"
 }

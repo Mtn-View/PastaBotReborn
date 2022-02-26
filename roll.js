@@ -4,152 +4,140 @@ const rollTemplateJsonPath = `./rolls/rolls_template.json`
 const fs = require('fs')
 const bot = require('./bot.js')
 
-var methods = {
-	catchCommand(bot, message, args) {
-		let isOwner = index.checkOwner(message.author.id)
-		let ch = message.channel
-		let rollListJson = this.loadRollsJSON()
-		let re = /\d+d\d+/
-		let cmd = args[0]
-		console.log(`roll args:${ args } ${typeof (args)}`)
-		if (args[0] === (cmd.match(re) || {}).input) {
-			// eslint-disable-next-line no-case-declarations
-			let split = cmd.split('d')
-			if (args[0] === 'drop' && typeof (args[1]) === Number) {
-				let customRoll = this.rollxdydropz(split[0], split[1], args[1])
-				ch.send(`${cmd} = ${customRoll.sum}`)
-			} else {
-				let customRoll = this.rollxdy(split[0], split[1])
-				ch.send(`${cmd} = ${customRoll.sum}`)
-			}
-		} else if (args[0] === 'stats') { // later feature: suggest class based on rolls? TODO: Debug mode that shows the whole shebang, not just the final numbers
-			// eslint-disable-next-line no-case-declarations
-			let statArray = this.rollArray(6) // returns Object
-			if (args[1] === 'v') {
-				// console.log("Outputting verbose rolls");
-				let verboseOut = ""
-				for (let i = 0; i < 6; i++) {
-					verboseOut += `**${statArray[i].sum}** (${statArray[i].rolls[0]} ${statArray[i].rolls[1]} ${statArray[i].rolls[2]} ~~${statArray[i].dropped[0]}~~)\n`
-				}
-				ch.send(`${message.member} here are your *verbose* stats: \n ${verboseOut}`)
-			} else if (args[1] === 'legit' && isOwner) {
-				ch.send(`${message.member} here are your *legit* stats: \n **18 18 18 18 18 18**`)
-			} else if (args[1] === 'super' && args[2] === 'legit' && isOwner) {
-				ch.send(`${message.member} here are your *super legit* stats: \n **20 20 20 20 20 20**`)
-			} else {
-				let out = ''
-				for (let i = 0; i < 6; i++) {
-					out += `${statArray[i].sum } `
-				}
-				if (args[1]) {
-					args = args.splice(1)
-					let argsString = args.join(' ')
-					console.log(`args string: ${ argsString}`)
-					ch.send(`${message.member} here are your *${argsString}* stats: \n **${out}**`)
-				} else {
-					ch.send(`${message.member} here are your stats: \n **${out}**`)
-				}
-				// this.addStatArrayToJson(rollListJson, statArray, message)
-				this.updateRollCountJson(rollListJson)
-			}
-		} else if (args[0] === 'restore' && isOwner) {
-			this.wipeRollsJSON()
-		} else {
-			ch.send(`Unknown command \`roll ${args}\``)
-			console.log(`${cmd} === ${re} ? ${re.test(cmd)}`)
-		}
-	},
-	rolldx(x) {
-		return Math.ceil(Math.random() * x)
-	},
-	rollxdy(x, y) { //will return array of rolls and sum in an object
-		let rolls = new Array()
-		let sum = 0
-		for (let i = 0; i < x; i++) {
-			rolls[i] = this.rolldx(y)
-			sum += rolls[i]
-		}
-		let obj = {
-			rolls,
-			sum,
-		}
-		return obj
-	},
-	rollxdydropz(x, y, z) {
-		let rolls = this.rollxdy(x, y).rolls // Syntax?
-		let dropped = new Array()
-		let sum = 0
+function roll1dx(x) {
+	return Math.ceil(Math.random() * x)
+}
+function rollxdy(x, y) { //will return array of rolls and total in an object
+	let rolls = new Array()
+	let total = 0
+	for (let i = 0; i < x; i++) {
+		rolls[i] = roll1dx(y)
+		total += rolls[i]
+	}
+	let obj = {
+		rolls,
+		total,
+	}
+	return obj
+}
+function rollxdydropz(x, y, z) {
+	let rolls = rollxdy(x, y).rolls // Syntax?
+	let dropped = new Array()
+	let total = 0
 
-		rolls.sort() // sort ascending order
-		let allRolls = Array.from(rolls)
-		for (let i = 0; i < z; i++) {
-			dropped[i] = rolls.shift() // moves dropped rolls from 'rolls' to 'dropped'
-		}
-		//let sum = rolls => rolls.reduce((a,b) => a + b, 0); // how is this supposed to work?
-		for (let i = 0; i < x - z; i++) {
-			sum += rolls[i]
-		}
-		let ret = {
-			allRolls,
-			rolls,
-			dropped,
-			sum,
-		}
-		return ret
-	},
-	rollArray(x) {
-		let stats = new Array()
-		for (let i = 0; i < x; i++) {
-			stats[i] = this.rollxdydropz(4, x, 1)
-		}
-		stats.sort((a, b) => (a.sum < b.sum) ? 1 : -1)
-		return stats
-	},
+	rolls.sort() // sort ascending order
+	let allRolls = Array.from(rolls)
+	for (let i = 0; i < z; i++) {
+		dropped[i] = rolls.shift() // moves dropped rolls from 'rolls' to 'dropped'
+	}
+	//let total = rolls => rolls.reduce((a,b) => a + b, 0); // how is this supposed to work?
+	for (let i = 0; i < x - z; i++) {
+		total += rolls[i]
+	}
+	let ret = {
+		allRolls,
+		rolls,
+		dropped,
+		total,
+	}
+	return ret
+}
+/**
+ *
+ * @param {number} x The number of time to roll 4d6d1
+ * @returns {array} [
+ * 	{
+ * 		allRolls: Array<Number>,
+ * 		rolls: Array<Number>,
+ * 		dropped: Array<Number>,
+ * 		total: Number
+ * 	}
+ * ]
+ */
+function rollArray(x) {
+	let stats = new Array()
+	for (let i = 0; i < x; i++) {
+		stats[i] = rollxdydropz(4, x, 1)
+	}
+	stats.sort((a, b) => (a.total < b.total) ? 1 : -1)
+	return stats
+}
 
-	updateDiceRollCountStatus(bot) {
-		let rollListJson = this.loadRollsJSON()
-		let currentNumRolls = rollListJson.totalNumRolls
-		bot.user.setPresence({
-			status: 'online',
-			activity: {
-				name: `${currentNumRolls} stat arrays get rolled`,
-				type: 'WATCHING',
-			},
-		})
-	},
+function updateDiceRollCountStatus(bot) {
+	let rollListJson = loadRollsJSON()
+	let currentNumRolls = rollListJson.totalNumRolls
+	bot.user.setPresence({
+		status: 'online',
+		activity: {
+			name: `${currentNumRolls} stat arrays get rolled`,
+			type: 'WATCHING',
+		},
+	})
+}
 
-	/**
+/**
 	 *
 	 * @param {Object} jsonObject
 	 * @param {Object} statObject
 	 * @param {Message} message
 	 */
-	async addStatArrayToJson(jsonObject, statObject, message) {
-		jsonObject.totalNumRolls = jsonObject.totalNumRolls + 1
-		console.log(`statobject type: ${ typeof (statObject)}`)
-		let statArray = {
-			num: jsonObject.statArrays.length,
-			user: index.getNicknameByGuildMember(message.member),
-			userID: message.author.id,
-			date: message.createdAt,
-			rolls: statObject }
-		jsonObject.statArrays.push(statArray)
-		await index.writeToJSON(rollJsonPath, jsonObject)
-		this.loadRollsJSON()
-	},
-	async updateRollCountJson(jsonObject) {
-		jsonObject.totalNumRolls = jsonObject.totalNumRolls + 1
-		return await index.writeToJSON(rollJsonPath, jsonObject)
-	},
-
-	loadRollsJSON() {
-		if (!fs.existsSync(rollJsonPath)) {
-			index.copyJSON(rollTemplateJsonPath, rollJsonPath)
-		}
-		return index.loadFromJSON(rollJsonPath)
-	},
-	wipeRollsJSON() {
-		index.copyJSON(rollTemplateJsonPath, rollJsonPath)
-	},
+async function addStatArrayToJson(jsonObject, statObject, message) {
+	jsonObject.totalNumRolls = jsonObject.totalNumRolls + 1
+	console.log(`statobject type: ${ typeof (statObject)}`)
+	let statArray = {
+		num: jsonObject.statArrays.length,
+		user: index.getNicknameByGuildMember(message.member),
+		userID: message.author.id,
+		date: message.createdAt,
+		rolls: statObject }
+	jsonObject.statArrays.push(statArray)
+	await index.writeToJSON(rollJsonPath, jsonObject)
+	loadRollsJSON()
 }
-module.exports = methods
+async function updateRollCountJson(jsonObject) {
+	jsonObject.totalNumRolls = jsonObject.totalNumRolls + 1
+	return await index.writeToJSON(rollJsonPath, jsonObject)
+}
+
+function loadRollsJSON() {
+	if (!fs.existsSync(rollJsonPath)) {
+		index.copyJSON(rollTemplateJsonPath, rollJsonPath)
+	}
+	return index.loadFromJSON(rollJsonPath)
+}
+function wipeRollsJSON() {
+	index.copyJSON(rollTemplateJsonPath, rollJsonPath)
+}
+
+function getStatsForMessage({ verbose, name, user }) {
+	const array = rollArray(6)
+	return array.reduce((previousValue, currentValue) => {
+		const { total, rolls, dropped } = currentValue
+		if (verbose) {
+			return previousValue.concat(`**${total}** = ${rolls.join(' + ')} (dropped ${dropped})\n`)
+		}
+		return previousValue.concat(`**${total}** `)
+	}, `${user.toString()} here are your ${verbose ? 'verbose ' : ''}${name ? `'${name}' ` : ''}stats\n`)
+}
+
+function getRollxdyForMessage({ verbose, name, x, y }) {
+	const { rolls, total } = rollxdy(x, y)
+	if (verbose) {
+		return `${x}d${y} ${name ? `(${name}) ` : ''}= ${rolls.join(' + ')} = **${total}**`
+	}
+	return `${x}d${y} ${name ? `(${name}) ` : ''}= **${total}**`
+}
+
+module.exports = function({ formula, name = '', verbose = true, hidden = false, user = {} } = {}) {
+	let xdyRegex = /\d+d\d+/
+
+	if (formula === 'stats') {
+		return { content: getStatsForMessage({ verbose, name, user }) }
+	} else if (formula.match(xdyRegex)) {
+		const [ x, y ] = formula.split('d')
+
+		return { content: getRollxdyForMessage({ verbose, name, x, y }) }
+	} else {
+		return { content: "Invalid formula. It should be either `xdy` (roll a y-sided die x times) or `stats` (roll 4d6d1 * 6)." }
+	}
+}
