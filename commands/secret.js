@@ -1,3 +1,6 @@
+const { SlashCommandBuilder } = require('@discordjs/builders')
+const name = 'secret'
+const description = 'Facilitate drawing "secrets" from a deck.'
 const secretJSONPath = `./secrets/SecretList.json`
 const secretBackupJSONPath = `./secrets/SecretListBackup.json`
 const util = require('../util.js')
@@ -71,7 +74,7 @@ async function getSecretForMessage(interaction) {
 		// channel.send({ content: `I've sent you your secret... :eyes:` })
 		// message.author.send(`You have ${numSecretsOwned} secret(s).`)
 		// message.author.send({ embeds: [ secretEmbed ], files: [ secretFile ] })
-		return interaction.reply({
+		return interaction.followUp({
 			embeds: [ secretEmbed ],
 			files: [ secretFile ],
 			content: `This is your ${ordinal(numSecretsOwned)} secret. Be sure to write it down, and don't tell anyone!`,
@@ -211,8 +214,8 @@ function backupSecretJSON(writePath) {
 } */
 
 module.exports = {
-	name: 'secret',
-	description: 'Shhhhhh :shushing_face:',
+	name,
+	description,
 	subcommandDescription: {
 		draw: 'Draw a secret from the deck.',
 		redraw: 'Return all of your secrets to the deck, and draw a new one.',
@@ -228,17 +231,17 @@ module.exports = {
 
 		switch (subcommand) {
 			case 'draw':
-				return await interaction.reply(getSecretForMessage({ user, quantity })) // how to handle multiple secrets? Multiple embeds?
+				return await interaction.followUp(getSecretForMessage({ user, quantity })) // how to handle multiple secrets? Multiple embeds?
 			case 'redraw':
 				await returnSecretByUserID(user.id)
-				return await interaction.reply(getSecretForMessage({ user, quantity }))
+				return await interaction.followUp(getSecretForMessage({ user, quantity }))
 			case 'return': {
 				const returned = await returnSecretByUserID(user.id)
-				return interaction.reply({ content: `Returned ${returned} secrets to the deck. You have no secrets.` })
+				return interaction.followUp({ content: `Returned ${returned} secrets to the deck. You have no secrets.` })
 			}
 			case 'count': {
 				const numSecrets = getNumberSecretsClaimedByAuthor(interaction)
-				return interaction.reply({ content: `You have ${numSecrets} secrets.` })
+				return interaction.followUp({ content: `You have ${numSecrets} secrets.` })
 			}
 			case 'enable':
 
@@ -261,6 +264,66 @@ module.exports = {
 		}
 		// return { content: `${subcommand} ${enable} ${filename} ${quantity} ${user.toString()}` }
 
-		return await interaction.reply({ content: `${subcommand} ${enable} ${filename} ${quantity} ${user.toString()}` })
+		return await interaction.followUp({ content: `${subcommand} ${enable} ${filename} ${quantity} ${user.toString()}` })
 	},
+	commandBuilder: new SlashCommandBuilder()
+		.setName(name)
+		.setDescription(description)
+		.addSubcommand(subcommand =>
+			subcommand
+				.setName('draw')
+				.setDescription('Draw a secret from the deck')
+				.addIntegerOption(option =>
+					option.setName('quantity')
+						.setDescription('Number of secrets to draw')))
+		.addSubcommand(subcommand =>
+			subcommand
+				.setName('redraw')
+				.setDescription('Returns all secrets to the deck, and draws new ones.')
+				.addIntegerOption(option =>
+					option.setName('quantity')
+						.setDescription('Number of secrets to draw after returning the rest to the deck.')))
+		.addSubcommand(subcommand =>
+			subcommand
+				.setName('return')
+				.setDescription('Return all of your owned secrets to the deck.'))
+		.addSubcommand(subcommand =>
+			subcommand
+				.setName('count')
+				.setDescription('Returns the number of secrets you have.'))
+		.addSubcommand(subcommand =>
+			subcommand
+				.setName('enable')
+				.setDescription('(Admin Only) Whether to enable secret draws.')
+				.addBooleanOption(option =>
+					option.setName('enable')
+						.setDescription('Whether to enable or disable secret draws.')))
+		.addSubcommand(subcommand =>
+			subcommand
+				.setName('reset')
+				.setDescription('(Admin Only) Returns all secrets to the deck.'))
+		.addSubcommand(subcommand =>
+			subcommand
+				.setName('load')
+				.setDescription('(Admin Only) Loads an exported up secret file.')
+				.addStringOption(option =>
+					option.setName('filename')
+						.setDescription('The name of the file to load.')))
+		.addSubcommand(subcommand =>
+			subcommand
+				.setName('save')
+				.setDescription('(Admin Only) Saves a secret file')
+				.addStringOption(option =>
+					option.setName('filename')
+						.setDescription('The name of the file to save.')),
+		)
+		.addSubcommand(subcommand =>
+			subcommand
+				.setName('remaining')
+				.setDescription('(Admin Only) Returns the amount of secrets remaining in the deck'))
+		.addSubcommand(subcommand =>
+			subcommand
+				.setName('all')
+				.setDescription(`(Admin Only) Reveal everyone's secrets`)),
+// TODO: Add the rest
 }

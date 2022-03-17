@@ -43,6 +43,7 @@ client.once('ready', () => {
 })
 
 client.on('interactionCreate', async interaction => {
+	interaction.deferReply()
 	if (interaction.type === 'APPLICATION_COMMAND') {
 		const { commandName } = interaction
 		const command = client.commands.get(commandName)
@@ -50,7 +51,8 @@ client.on('interactionCreate', async interaction => {
 		try {
 			return await command.execute(interaction)
 		} catch (error) {
-			return interaction.reply({ content: 'Error executing command' })
+			console.error(error)
+			return interaction.followUp({ content: 'Error executing command', ephemeral: true })
 		}
 	}
 })

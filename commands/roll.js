@@ -1,3 +1,6 @@
+const { SlashCommandBuilder } = require('@discordjs/builders')
+const name = 'roll'
+const description = 'Roll some dice!'
 const util = require('../util.js')
 const rollJsonPath = `./rolls/rolls.json`
 const rollTemplateJsonPath = `./rolls/rolls_template.json`
@@ -132,8 +135,8 @@ function getRollxdyForMessage({ verbose, name, x, y }) {
 } */
 
 module.exports = {
-	name: 'roll',
-	description: 'Roll some dice!',
+	name,
+	description,
 	async execute(interaction) {
 		const formula = interaction.options.getString('formula')
 		const name = interaction.options.getString('name')
@@ -144,14 +147,30 @@ module.exports = {
 		let xdyRegex = /\d+d\d+/
 
 		if (formula === 'stats') {
-			return await interaction.reply({ content: getStatsForMessage({ verbose, name, user }) }, ephemeral)
+			return await interaction.followUp({ content: getStatsForMessage({ verbose, name, user }) }, ephemeral)
 		} else if (formula.match(xdyRegex)) {
 			const [ x, y ] = formula.split('d')
 
-			return await interaction.reply({ content: getRollxdyForMessage({ verbose, name, x, y }) }, ephemeral)
+			return await interaction.followUp({ content: getRollxdyForMessage({ verbose, name, x, y }) }, ephemeral)
 		} else {
-			return await interaction.reply({ content: "Invalid formula. It should be either `xdy` (roll a y-sided die x times) or `stats` (roll 4d6d1 * 6)." }, ephemeral)
+			return await interaction.followUp({ content: "Invalid formula. It should be either `xdy` (roll a y-sided die x times) or `stats` (roll 4d6d1 * 6)." }, ephemeral)
 		}
 	},
+	commandBuilder: new SlashCommandBuilder()
+		.setName(name)
+		.setDescription(description) // dice / stats subcommands instead of formula
+		.addStringOption(option =>
+			option.setName('formula')
+				.setDescription("The dice formula to roll. Either `xdy` or `stats`.")
+				.setRequired(true))
+		.addStringOption(option =>
+			option.setName('name')
+				.setDescription('A name for these stats'))
+		.addBooleanOption(option =>
+			option.setName('verbose')
+				.setDescription('Show each dice roll, not just the totals.'))
+		.addBooleanOption(option =>
+			option.setName('hidden')
+				.setDescription('The dice roll will be only visible to you.')),
 
 }

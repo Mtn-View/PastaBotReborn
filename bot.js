@@ -53,13 +53,13 @@ bot.on('interactionCreate', async interaction => {
 
 	switch (commandName) {
 		case 'ping':
-			await interaction.reply(`That's pretty pongers, bro.`)
+			await interaction.followUp(`That's pretty pongers, bro.`)
 			break
 		case 'server':
-			await interaction.reply(`Server name: ${interaction.guild.name}. Total members: ${interaction.guild.memberCount}`)
+			await interaction.followUp(`Server name: ${interaction.guild.name}. Total members: ${interaction.guild.memberCount}`)
 			break
 		case 'roll':
-			await interaction.reply({
+			await interaction.followUp({
 				...roll({ // switch this to spread and not just do content for consistency
 					formula: interaction.options.getString('formula'),
 					name: interaction.options.getString('name'),
@@ -77,19 +77,19 @@ bot.on('interactionCreate', async interaction => {
 				quantity: interaction.options.getInteger('quantity'),
 				user,
 			})
-			await interaction.reply({
+			await interaction.followUp({
 				...secretToSend,
 				ephemeral: true,
 			})
 			break
 		case 'pasta':
-			await interaction.reply({ content: 'This is not the pasta you are looking for.' })
+			await interaction.followUp({ content: 'This is not the pasta you are looking for.' })
 			break
 		case 'music-trivia':
-			await interaction.reply({})
+			await interaction.followUp({})
 			break
 		case 'help':
-			await interaction.reply({ content: 'All hope is lost' })
+			await interaction.followUp({ content: 'All hope is lost' })
 	}
 })
 

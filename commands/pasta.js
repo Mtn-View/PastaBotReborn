@@ -1,7 +1,15 @@
+const { SlashCommandBuilder } = require('@discordjs/builders')
+const name = 'pasta'
+const description = 'Yo dawg, I heard you like pasta'
+
 module.exports = {
-	name: 'pasta',
-	description: 'Yo dawg, I heard you like pasta',
+	name,
+	description,
 	async execute(interaction) {
-		return await interaction.reply({ content: 'Pasta mode WIP', ephemeral: false })
+		return await interaction.followUp({ content: 'Pasta mode WIP', ephemeral: false })
 	},
+	commandBuilder: new SlashCommandBuilder()
+		.setName(name)
+		.setDescription(description),
+
 }
