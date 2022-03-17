@@ -2,7 +2,7 @@
 	"name": "shitposterbot",
 	"version": "1.0.0",
 	"description": "Dad bot took away pasta mode, and therefore I have been radicalized.",
-	"main": "bot.js",
+	"main": "index.js",
 	"author": "Mountain View",
 	"dependencies": {
 		"@discordjs/builders": "^0.6.0",
@@ -11,13 +11,19 @@
 		"discord-api-types": "^0.23.1",
 		"discord.js": "^13.1.0",
 		"nodemon": "^2.0.7",
+		"ordinal": "^1.0.3",
 		"winston": "^3.3.3"
 	},
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"start": "node bot.js cum",
-		"startdev": "nodemon bot.js --ignore secrets/ --ignore rolls/ -- dev",
-		"deployCommands": "node ./deploy-commands.js"
+		"start": "node index.js cum",
+		"startdev": "nodemon index.js --ignore secrets/ --ignore rolls/ -- dev",
+		"removeCommands": "node ./deploy-commands.js deleteGlobal deleteGuild",
+		"resetGuildCommands": "node ./deploy-commands.js deleteGuild registerGuild",
+		"deployCommands": "node ./deploy-commands.js registerGlobal registerGuild",
+		"removeCommandsDev": "node ./deploy-commands.js deleteGlobal deleteGuild dev",
+		"resetGuildCommandsDev": "node ./deploy-commands.js deleteGuild registerGuild dev",
+		"deployCommandsDev": "node ./deploy-commands.js registerGlobal registerGuild dev"
 	},
 	"license": "ISC"
 }
