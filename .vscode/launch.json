@@ -7,11 +7,21 @@
 		{
 			"type": "pwa-node",
 			"request": "launch",
-			"name": "Launch Program",
+			"name": "Launch Nodemon",
+			"runtimeExecutable": "nodemon",
 			"skipFiles": [
 				"<node_internals>/**"
 			],
-			"program": "${workspaceFolder}\\bot.js"
+			"program": "${workspaceFolder}\\index.js",
+			"args": [
+				"dev"
+			],
+			"runtimeArgs": [
+				"--ignore",
+				"secrets/",
+				"--ignore",
+				"rolls/",
+			]
 		}
 	]
 }
