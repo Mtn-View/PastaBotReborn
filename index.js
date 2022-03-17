@@ -1,93 +1,56 @@
+const Discord = require('discord.js')
 const fs = require('fs')
-const { ownerId } = require('./config.json')
+const auth = require('./auth.json')
+const { prefix, guildId } = require('./config.json')
 
-var methods = {
-	checkOwner(id) {
-		return (id === ownerId)
-	},
-	async writeToJSON(jsonFilePath, jsonObject) {
-		jsonFilePath = this.checkJSONExtension(jsonFilePath, '')
-		await fs.writeFile(jsonFilePath, JSON.stringify(jsonObject, null, 4), err =>{
-			if (err) {
-				console.error(`Error writing file: ${err}`)
-				return false
-			}
-		})
-		return true
-	},
-	loadFromJSON(path) {
-		path = this.checkJSONExtension(path)
-		if (fs.existsSync(path)) {
-			let jsonString = fs.readFileSync(path, `utf8`)
-			try {
-				return JSON.parse(jsonString)
-			} catch (err) {
-				console.error(err)
-				return false
-			}
-		}
-		return false
-	},
-	// reads a json file and writes its contents to another
-	copyJSON(jsonReadPath, jsonWritePath) {
-		try {
-			let jsonString = fs.readFileSync(jsonReadPath, `utf8`)
-			this.writeToJSON(jsonWritePath, JSON.parse(jsonString))
-			return true
-		} catch (err) {
-			console.log(`copy err:\n${err}`)
-			return false
-		}
-	},
-	// works
-	async getGuildMemberByID(message, id) {
-		if (message.guild.available) {
-			if (id) {
-				return await message.guild.members.fetch(id)
-			}
-		}
-	},
-	checkJSONExtension(path) {
-		if (!path.includes('.json')) {
-			path = path.concat('.json')
-		}
-		return path
-	},
-	checkJSONExtPath(path, directory) {
-		if (!path.includes('secrets/')) {
-			path = 'secrets/'.concat(path)
-		}
-		if (!path.includes('.json')) {
-			path = path.concat('.json')
-		}
-		return path
-	},
-	// Definitely does not work
-	getNicknameByID(message, id) {
-		this.getGuildMemberByID(message, id).then(gm =>{
-			if (gm) {
-				let nick = gm.nickname
-				if (nick) {
-					return nick
-				}
-				let username = gm.user.username
-				return username
-			}
-		})
-	},
-	// Returns a guild member's nickname, or if they have none, their username.
-	getNicknameByGuildMember(gm) {
-		if (gm) {
-			let nick = gm.nickname
-			if (nick) {
-				return nick
-			}
-			let username = gm.user.username
-			return username
-		}
-	},
-	async printAllGuildMembers(message) {
-		return await message.guild.members.fetch({ force: true })
-	},
+const intents = new Discord.Intents([ 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS' ])
+// Initialize Discord Bot client
+const client = new Discord.Client({ intents })
+client.commands = new Discord.Collection()
+
+const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js') && !file.endsWith('_old.js'))
+
+for (const file of commandFiles) {
+	const command = require(`./commands/${file}`)
+	client.commands.set(command.name, command)
 }
-module.exports = methods
+
+//Login, yee haw
+client.login(process.argv[2] === 'dev' ? auth.token : auth.prodToken)
+
+client.once('ready', () => {
+	console.log('Connected')
+	console.log(`Logged in as: ${client.user.tag}`)
+	if (process.argv[2] === 'dev') {
+		client.user.setPresence({
+			status: 'dnd',
+			activity: {
+				name: 'with the code, expect unstable performance while developing.',
+				type: 'PLAYING',
+			},
+		})
+		console.log("Running in development mode.")
+	} else {
+		client.user.setPresence({
+			status: 'online',
+			activity: {
+				name: 'the call of the void',
+				type: 'LISTENING',
+			},
+		})
+		console.log("Running in production :clown: mode")
+	}
+})
+
+client.on('interactionCreate', async interaction => {
+	if (interaction.type === 'APPLICATION_COMMAND') {
+		const { commandName } = interaction
+		const command = client.commands.get(commandName)
+
+		try {
+			return await command.execute(interaction)
+		} catch (error) {
+			return interaction.reply({ content: 'Error executing command' })
+		}
+	}
+})

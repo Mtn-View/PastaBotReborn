@@ -1,10 +1,9 @@
 const secretJSONPath = `./secrets/SecretList.json`
 const secretBackupJSONPath = `./secrets/SecretListBackup.json`
-const index = require('./index.js')
-// const roll = require('./roll.js')
+const util = require('../util.js')
 const fs = require('fs')
-const { prefix } = require('./config.json')
 const Discord = require('discord.js')
+const ordinal = require('ordinal')
 
 let totalNumSecrets = 17
 // This is just here for now until I figure out what to do with the roll.js exports
@@ -16,7 +15,7 @@ function loadSecretsJSON() {
 	// let jsonString = fs.readFileSync(secretJSONPath, `utf8`)
 	// let secretListJSON = JSON.parse(jsonString)
 	// return secretListJSON
-	return index.loadFromJSON(secretJSONPath)
+	return util.loadFromJSON(secretJSONPath)
 }
 function allowSecretDraws(allow) {
 	let jsonString = fs.readFileSync(secretJSONPath, `utf8`)
@@ -26,7 +25,7 @@ function allowSecretDraws(allow) {
 	} else if (allow === false) {
 		secretListJSON.allowDraws = false
 	}
-	index.writeToJSON(secretJSONPath, secretListJSON)
+	util.writeToJSON(secretJSONPath, secretListJSON)
 	return secretListJSON.allowDraws
 }
 async function getRandomSecret(user) {
@@ -36,7 +35,7 @@ async function getRandomSecret(user) {
 	if (secretListJSON.allowDraws === true && secretListJSON.unclaimed > 0) {
 		let fileNum = roll1dx(totalNumSecrets) - 1
 		let secretObject = secretListJSON.secrets[fileNum]
-		// Do not choose a  secret that's already taken
+		// Do not choose a secret that's already taken
 		while (secretObject.taken != false && secretListJSON.unclaimed > 0) {
 			fileNum = roll1dx(totalNumSecrets) - 1
 			secretObject = secretListJSON.secrets[fileNum]
@@ -51,15 +50,16 @@ async function getRandomSecret(user) {
 
 		console.log(`${secretListJSON.unclaimed} secrets left unclaimed.`)
 		// write out and return
-		await index.writeToJSON(secretJSONPath, secretListJSON)
+		await util.writeToJSON(secretJSONPath, secretListJSON)
 		return secretObject
 	}
 	// return false if no secrets remaining
 	return null
 }
-async function getSecretForMessage({ user }) {
+async function getSecretForMessage(interaction) {
+	const { user } = interaction
 	let secretObject = await getRandomSecret(user)
-	// let numSecretsOwned = getNumberSecretsClaimedByAuthor(message)
+	let numSecretsOwned = getNumberSecretsClaimedByAuthor(interaction)
 	if (secretObject) {
 		console.log(`secret object:`, secretObject)
 		let secretEmbed = new Discord.MessageEmbed()
@@ -71,12 +71,15 @@ async function getSecretForMessage({ user }) {
 		// channel.send({ content: `I've sent you your secret... :eyes:` })
 		// message.author.send(`You have ${numSecretsOwned} secret(s).`)
 		// message.author.send({ embeds: [ secretEmbed ], files: [ secretFile ] })
-		return { embeds: [ secretEmbed ], files: [ secretFile ], content: 'This is your secret. Be sure to write it down, and don\'t tell anyone!' }
+		return interaction.reply({
+			embeds: [ secretEmbed ],
+			files: [ secretFile ],
+			content: `This is your ${ordinal(numSecretsOwned)} secret. Be sure to write it down, and don't tell anyone!`,
+		})
 	} else if (getSecretsRemaining() <= 0) {
-		// channel.send({ content: `No secrets remaining.` })
-		return { content: 'No secrets remaining; failed to draw a secret.' }
+		return { content: 'No secrets remaining; no secrets were drawn.' }
 	} else {
-		return { content: `Secret drawing not enabled; failed to draw a secret.` }
+		return { content: `Secret drawing not enabled; no secrets were drawn.` }
 	}
 }
 async function returnSecretByUserID(userId) {
@@ -91,15 +94,15 @@ async function returnSecretByUserID(userId) {
 		}
 	})
 	secretListJSON.unclaimed += numSecretsRemoved
-	await index.writeToJSON(secretJSONPath, secretListJSON)
+	await util.writeToJSON(secretJSONPath, secretListJSON)
 	console.log(`Removed ${numSecretsRemoved} secrets.`)
 	return numSecretsRemoved
 }
-function getNumberSecretsClaimedByAuthor(userId) {
+function getNumberSecretsClaimedByAuthor(interaction) {
 	let secretListJSON = loadSecretsJSON()
 	let numSecrets = 0
 	secretListJSON.secrets.forEach(s => {
-		if (s.takenID === userId) {
+		if (s.takenID === interaction.user.id) {
 			numSecrets++
 		}
 	})
@@ -117,9 +120,9 @@ async function getAllClaimedSecrets(message) {
 	for (const s of secretListJSON.secrets) {
 		if (s.takenID) {
 			console.log(`taken by: ${ s.takenID}`)
-			let mem = await index.getGuildMemberByID(message, s.takenID)
-			console.log(`${index.getNicknameByGuildMember(mem)} has the secret ${s.name}`)
-			allSecrets += `${index.getNicknameByGuildMember(mem)} has the secret ${s.name}\n`
+			let mem = await util.getGuildMemberByID(message, s.takenID)
+			console.log(`${util.getNicknameByGuildMember(mem)} has the secret ${s.name}`)
+			allSecrets += `${util.getNicknameByGuildMember(mem)} has the secret ${s.name}\n`
 		}
 	}
 	return allSecrets
@@ -145,12 +148,12 @@ function resetAllSecrets() {
 		s.takenUsername = ""
 	})
 	secretListJSON.unclaimed = totalNumSecrets
-	index.writeToJSON(secretJSONPath, secretListJSON)
+	util.writeToJSON(secretJSONPath, secretListJSON)
 	return `Resetting all secrets... :arrows_counterclockwise:`
 }
 function restoreBackupSecretJSON(readPath) {
 	if (readPath) {
-		readPath = index.checkJSONExtPath(readPath, 'secrets/')
+		readPath = util.checkJSONExtPath(readPath, 'secrets/')
 	} else {
 		readPath = secretBackupJSONPath
 	}
@@ -158,7 +161,7 @@ function restoreBackupSecretJSON(readPath) {
 	// let jsonString = fs.readFileSync(readPath, `utf8`)
 	// let secretListBackupJSON = JSON.parse(jsonString)
 	// index.writeToJSON(secretJSONPath, secretListBackupJSON)
-	let success = index.copyJSON(readPath, secretJSONPath)
+	let success = util.copyJSON(readPath, secretJSONPath)
 	if (success) {
 		return readPath
 	}
@@ -166,13 +169,13 @@ function restoreBackupSecretJSON(readPath) {
 }
 function backupSecretJSON(writePath) {
 	if (writePath) {
-		writePath = index.checkJSONExtPath(writePath, 'secrets/')
-		index.copyJSON(secretJSONPath, writePath)
+		writePath = util.checkJSONExtPath(writePath, 'secrets/')
+		util.copyJSON(secretJSONPath, writePath)
 		return writePath
 	}
 	return false
 }
-module.exports = async function({ subcommand, enable, filename, quantity, user }) { // create a bunch of secrets, with fill-in-the-blank bits for different campaign settings
+/* module.exports = async function({ subcommand, enable, filename, quantity, user }) { // create a bunch of secrets, with fill-in-the-blank bits for different campaign settings
 	switch (subcommand) {
 		case 'draw':
 			return getSecretForMessage({ user, quantity }) // how to handle multiple secrets? Multiple embeds?
@@ -205,5 +208,59 @@ module.exports = async function({ subcommand, enable, filename, quantity, user }
 			break
 	}
 	return { content: `${subcommand} ${enable} ${filename} ${quantity} ${user.toString()}` }
-}
+} */
 
+module.exports = {
+	name: 'secret',
+	description: 'Shhhhhh :shushing_face:',
+	subcommandDescription: {
+		draw: 'Draw a secret from the deck.',
+		redraw: 'Return all of your secrets to the deck, and draw a new one.',
+		unclaim: 'Return all of your secrets to the deck.',
+		count: 'Return the number of secrets that you have.',
+	},
+	async execute(interaction) {
+		const subcommand = interaction.options.getSubcommand()
+		const enable = interaction.options.getBoolean('enable')
+		const filename = interaction.options.getString('filename')
+		const quantity = interaction.options.getInteger('quantity')
+		const user = interaction.user
+
+		switch (subcommand) {
+			case 'draw':
+				return await interaction.reply(getSecretForMessage({ user, quantity })) // how to handle multiple secrets? Multiple embeds?
+			case 'redraw':
+				await returnSecretByUserID(user.id)
+				return await interaction.reply(getSecretForMessage({ user, quantity }))
+			case 'return': {
+				const returned = await returnSecretByUserID(user.id)
+				return interaction.reply({ content: `Returned ${returned} secrets to the deck. You have no secrets.` })
+			}
+			case 'count': {
+				const numSecrets = getNumberSecretsClaimedByAuthor(interaction)
+				return interaction.reply({ content: `You have ${numSecrets} secrets.` })
+			}
+			case 'enable':
+
+				break
+			case 'reset':
+
+				break
+			case 'load':
+
+				break
+			case 'save':
+
+				break
+			case 'remaining':
+
+				break
+			case 'all':
+
+				break
+		}
+		// return { content: `${subcommand} ${enable} ${filename} ${quantity} ${user.toString()}` }
+
+		return await interaction.reply({ content: `${subcommand} ${enable} ${filename} ${quantity} ${user.toString()}` })
+	},
+}

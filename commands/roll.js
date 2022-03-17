@@ -1,8 +1,7 @@
-const index = require('./index.js')
+const util = require('../util.js')
 const rollJsonPath = `./rolls/rolls.json`
 const rollTemplateJsonPath = `./rolls/rolls_template.json`
 const fs = require('fs')
-const bot = require('./bot.js')
 
 function roll1dx(x) {
 	return Math.ceil(Math.random() * x)
@@ -86,27 +85,27 @@ async function addStatArrayToJson(jsonObject, statObject, message) {
 	console.log(`statobject type: ${ typeof (statObject)}`)
 	let statArray = {
 		num: jsonObject.statArrays.length,
-		user: index.getNicknameByGuildMember(message.member),
+		user: util.getNicknameByGuildMember(message.member),
 		userID: message.author.id,
 		date: message.createdAt,
 		rolls: statObject }
 	jsonObject.statArrays.push(statArray)
-	await index.writeToJSON(rollJsonPath, jsonObject)
+	await util.writeToJSON(rollJsonPath, jsonObject)
 	loadRollsJSON()
 }
 async function updateRollCountJson(jsonObject) {
 	jsonObject.totalNumRolls = jsonObject.totalNumRolls + 1
-	return await index.writeToJSON(rollJsonPath, jsonObject)
+	return await util.writeToJSON(rollJsonPath, jsonObject)
 }
 
 function loadRollsJSON() {
 	if (!fs.existsSync(rollJsonPath)) {
-		index.copyJSON(rollTemplateJsonPath, rollJsonPath)
+		util.copyJSON(rollTemplateJsonPath, rollJsonPath)
 	}
-	return index.loadFromJSON(rollJsonPath)
+	return util.loadFromJSON(rollJsonPath)
 }
 function wipeRollsJSON() {
-	index.copyJSON(rollTemplateJsonPath, rollJsonPath)
+	util.copyJSON(rollTemplateJsonPath, rollJsonPath)
 }
 
 function getStatsForMessage({ verbose, name, user }) {
@@ -128,16 +127,31 @@ function getRollxdyForMessage({ verbose, name, x, y }) {
 	return `${x}d${y} ${name ? `(${name}) ` : ''}= **${total}**`
 }
 
-module.exports = function({ formula, name = '', verbose = true, hidden = false, user = {} } = {}) {
-	let xdyRegex = /\d+d\d+/
+/* module.exports = function({ formula, name = '', verbose = true, hidden = false, user = {} } = {}) {
 
-	if (formula === 'stats') {
-		return { content: getStatsForMessage({ verbose, name, user }) }
-	} else if (formula.match(xdyRegex)) {
-		const [ x, y ] = formula.split('d')
+} */
 
-		return { content: getRollxdyForMessage({ verbose, name, x, y }) }
-	} else {
-		return { content: "Invalid formula. It should be either `xdy` (roll a y-sided die x times) or `stats` (roll 4d6d1 * 6)." }
-	}
+module.exports = {
+	name: 'roll',
+	description: 'Roll some dice!',
+	async execute(interaction) {
+		const formula = interaction.options.getString('formula')
+		const name = interaction.options.getString('name')
+		const verbose = interaction.options.getBoolean('verbose')
+		const ephemeral = interaction.options.getBoolean('hidden')
+		const user = interaction.user
+
+		let xdyRegex = /\d+d\d+/
+
+		if (formula === 'stats') {
+			return await interaction.reply({ content: getStatsForMessage({ verbose, name, user }) }, ephemeral)
+		} else if (formula.match(xdyRegex)) {
+			const [ x, y ] = formula.split('d')
+
+			return await interaction.reply({ content: getRollxdyForMessage({ verbose, name, x, y }) }, ephemeral)
+		} else {
+			return await interaction.reply({ content: "Invalid formula. It should be either `xdy` (roll a y-sided die x times) or `stats` (roll 4d6d1 * 6)." }, ephemeral)
+		}
+	},
+
 }
