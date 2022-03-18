@@ -12,6 +12,7 @@
 		"discord.js": "^13.1.0",
 		"nodemon": "^2.0.7",
 		"ordinal": "^1.0.3",
+		"sqlite3": "^5.0.2",
 		"winston": "^3.3.3"
 	},
 	"scripts": {

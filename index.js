@@ -2,6 +2,7 @@ const Discord = require('discord.js')
 const fs = require('fs')
 const auth = require('./auth.json')
 const { prefix, guildId } = require('./config.json')
+const db = require('./tools/db')
 
 const intents = new Discord.Intents([ 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS' ])
 // Initialize Discord Bot client
@@ -17,6 +18,7 @@ for (const file of commandFiles) {
 
 //Login, yee haw
 client.login(process.argv[2] === 'dev' ? auth.token : auth.prodToken)
+db.initializeDatabase().then(() => console.log("Initialized database"))
 
 client.once('ready', () => {
 	console.log('Connected')
