@@ -2,7 +2,7 @@ const sqlite = require('sqlite3').verbose()
 const fs = require('fs')
 const dbPath = 'database'
 
-const tableQueryMap = new Map([
+const tableInitQueryMap = new Map([
 	[ 'Rolls', `CREATE TABLE Rolls (
 		userId INTEGER,
 		data BLOB,
@@ -47,11 +47,11 @@ function databaseIsInitialized(dbPath) {
 }
 
 async function initTablesIfAbsent() {
-	const tables = Array.from(tableQueryMap.keys())
+	const tables = Array.from(tableInitQueryMap.keys())
 	return await Promise.all(tables.map(async table => {
 		const res = await doQueryFirst(`SELECT name FROM sqlite_master WHERE type='table' AND name='${table}'`)
 		if (res?.name !== table) { // Doesn't exist
-			await doQueryFirst(tableQueryMap.get(table))
+			await doQueryFirst(tableInitQueryMap.get(table))
 			return `${table} created`
 		}
 		return `${table} exists`
@@ -64,7 +64,9 @@ async function initializeDatabase() {
 }
 
 module.exports = {
+	tableInitQueryMap,
 	doQuery,
+	doQueryFirst,
 	initializeDatabase,
 	databaseIsInitialized,
 }

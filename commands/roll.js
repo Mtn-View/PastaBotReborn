@@ -5,6 +5,17 @@ const util = require('../util.js')
 const rollJsonPath = `./rolls/rolls.json`
 const rollTemplateJsonPath = `./rolls/rolls_template.json`
 const fs = require('fs')
+const db = require('../tools/db')
+
+async function logRolltoDb(userId, roll) {
+	const query = `INSERT INTO Rolls (userId, data, timestamp) VALUES ($userId, $data, $timestamp);`
+	const res = await db.doQueryFirst(query, {
+		$userId: userId,
+		$data: roll,
+		$timestamp: Date.now(),
+	})
+	return res
+}
 
 function roll1dx(x) {
 	return Math.ceil(Math.random() * x)
@@ -65,7 +76,7 @@ function rollArray(x) {
 	return stats
 }
 
-function updateDiceRollCountStatus(bot) {
+/* function updateDiceRollCountStatus(bot) {
 	let rollListJson = loadRollsJSON()
 	let currentNumRolls = rollListJson.totalNumRolls
 	bot.user.setPresence({
@@ -75,14 +86,9 @@ function updateDiceRollCountStatus(bot) {
 			type: 'WATCHING',
 		},
 	})
-}
+} */
 
-/**
-	 *
-	 * @param {Object} jsonObject
-	 * @param {Object} statObject
-	 * @param {Message} message
-	 */
+/*
 async function addStatArrayToJson(jsonObject, statObject, message) {
 	jsonObject.totalNumRolls = jsonObject.totalNumRolls + 1
 	console.log(`statobject type: ${ typeof (statObject)}`)
@@ -95,13 +101,13 @@ async function addStatArrayToJson(jsonObject, statObject, message) {
 	jsonObject.statArrays.push(statArray)
 	await util.writeToJSON(rollJsonPath, jsonObject)
 	loadRollsJSON()
-}
-async function updateRollCountJson(jsonObject) {
+} */
+/* async function updateRollCountJson(jsonObject) {
 	jsonObject.totalNumRolls = jsonObject.totalNumRolls + 1
 	return await util.writeToJSON(rollJsonPath, jsonObject)
-}
+} */
 
-function loadRollsJSON() {
+/* function loadRollsJSON() {
 	if (!fs.existsSync(rollJsonPath)) {
 		util.copyJSON(rollTemplateJsonPath, rollJsonPath)
 	}
@@ -109,10 +115,12 @@ function loadRollsJSON() {
 }
 function wipeRollsJSON() {
 	util.copyJSON(rollTemplateJsonPath, rollJsonPath)
-}
+} */
 
-function getStatsForMessage({ verbose, name, user }) {
+async function getStatsForMessage({ verbose, name, user }) {
 	const array = rollArray(6)
+	const res = await logRolltoDb(user.id, JSON.stringify(array))
+
 	return array.reduce((previousValue, currentValue) => {
 		const { total, rolls, dropped } = currentValue
 		if (verbose) {
@@ -122,8 +130,10 @@ function getStatsForMessage({ verbose, name, user }) {
 	}, `${user.toString()} here are your ${verbose ? 'verbose ' : ''}${name ? `'${name}' ` : ''}stats\n`)
 }
 
-function getRollxdyForMessage({ verbose, name, x, y }) {
+async function getRollxdyForMessage({ verbose, name, x, y, user }) {
 	const { rolls, total } = rollxdy(x, y)
+	const res = await logRolltoDb(user.id, JSON.stringify({ rolls, total }))
+
 	if (verbose) {
 		return `${x}d${y} ${name ? `(${name}) ` : ''}= ${rolls.join(' + ')} = **${total}**`
 	}
@@ -147,11 +157,12 @@ module.exports = {
 		let xdyRegex = /\d+d\d+/
 
 		if (formula === 'stats') {
-			return await interaction.followUp({ content: getStatsForMessage({ verbose, name, user }) }, ephemeral)
+			const roll = await getStatsForMessage({ verbose, name, user })
+			return await interaction.followUp({ content: roll }, ephemeral)
 		} else if (formula.match(xdyRegex)) {
 			const [ x, y ] = formula.split('d')
-
-			return await interaction.followUp({ content: getRollxdyForMessage({ verbose, name, x, y }) }, ephemeral)
+			const roll = await getRollxdyForMessage({ verbose, name, x, y, user })
+			return await interaction.followUp({ content: roll }, ephemeral)
 		} else {
 			return await interaction.followUp({ content: "Invalid formula. It should be either `xdy` (roll a y-sided die x times) or `stats` (roll 4d6d1 * 6)." }, ephemeral)
 		}
