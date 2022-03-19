@@ -6,7 +6,8 @@ const tableInitQueryMap = new Map([
 	[ 'Rolls', `CREATE TABLE Rolls (
 		userId INTEGER,
 		data BLOB,
-		timestamp BLOB
+		timestamp BLOB,
+		guildId INTEGER
 	)` ],
 ])
 

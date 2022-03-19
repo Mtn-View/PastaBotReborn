@@ -7,12 +7,13 @@ const rollTemplateJsonPath = `./rolls/rolls_template.json`
 const fs = require('fs')
 const db = require('../tools/db')
 
-async function logRolltoDb(userId, roll) {
-	const query = `INSERT INTO Rolls (userId, data, timestamp) VALUES ($userId, $data, $timestamp);`
+async function logRolltoDb({ userId, guildId, data }) {
+	const query = `INSERT INTO Rolls (userId, data, timestamp, guildId) VALUES ($userId, $data, $timestamp, $guildId);`
 	const res = await db.doQueryFirst(query, {
 		$userId: userId,
-		$data: roll,
+		$data: data,
 		$timestamp: Date.now(),
+		$guildId: guildId,
 	})
 	return res
 }
@@ -117,9 +118,9 @@ function wipeRollsJSON() {
 	util.copyJSON(rollTemplateJsonPath, rollJsonPath)
 } */
 
-async function getStatsForMessage({ verbose, name, user }) {
+async function getStatsForMessage({ verbose, name, user, guildId }) {
 	const array = rollArray(6)
-	const res = await logRolltoDb(user.id, JSON.stringify(array))
+	const res = await logRolltoDb({ userId: user.id, data: JSON.stringify(array), guildId })
 
 	return array.reduce((previousValue, currentValue) => {
 		const { total, rolls, dropped } = currentValue
@@ -130,9 +131,9 @@ async function getStatsForMessage({ verbose, name, user }) {
 	}, `${user.toString()} here are your ${verbose ? 'verbose ' : ''}${name ? `'${name}' ` : ''}stats\n`)
 }
 
-async function getRollxdyForMessage({ verbose, name, x, y, user }) {
+async function getRollxdyForMessage({ verbose, name, x, y, user, guildId }) {
 	const { rolls, total } = rollxdy(x, y)
-	const res = await logRolltoDb(user.id, JSON.stringify({ rolls, total }))
+	const res = await logRolltoDb(user.id, JSON.stringify({ rolls, total, guildId }))
 
 	if (verbose) {
 		return `${x}d${y} ${name ? `(${name}) ` : ''}= ${rolls.join(' + ')} = **${total}**`
@@ -157,11 +158,11 @@ module.exports = {
 		let xdyRegex = /\d+d\d+/
 
 		if (formula === 'stats') {
-			const roll = await getStatsForMessage({ verbose, name, user })
+			const roll = await getStatsForMessage({ verbose, name, user, guildId: interaction.guildId })
 			return await interaction.followUp({ content: roll }, ephemeral)
 		} else if (formula.match(xdyRegex)) {
 			const [ x, y ] = formula.split('d')
-			const roll = await getRollxdyForMessage({ verbose, name, x, y, user })
+			const roll = await getRollxdyForMessage({ verbose, name, x, y, user, guildId: interaction.guildId })
 			return await interaction.followUp({ content: roll }, ephemeral)
 		} else {
 			return await interaction.followUp({ content: "Invalid formula. It should be either `xdy` (roll a y-sided die x times) or `stats` (roll 4d6d1 * 6)." }, ephemeral)
