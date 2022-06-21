@@ -7,17 +7,25 @@ const fs = require('fs')
 
 const ownerIds = [ 158763732254588928, 221753632566018061 ] // Aquahawk, CharlesKaup
 
-const isDev = process.argv.includes('dev')
-console.log("Dev?", isDev)
-const rest = new REST({ version: '9' }).setToken(isDev ? token : prodToken)
-const currentClientId = isDev ? clientId : prodClientId
+const IS_DEV = process.argv.includes('dev')
+console.log("Dev?", IS_DEV)
+const rest = new REST({ version: '9' }).setToken(IS_DEV ? token : prodToken)
+const currentClientId = IS_DEV ? clientId : prodClientId
 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js') && !file.endsWith('_old.js'))
 
-const commands = commandFiles.map(file => {
-	const { commandBuilder } = require(`./commands/${file}`)
+/* const commands = commandFiles.map(file => {
+	const { commandBuilder, dev } = require(`./commands/${file}`)
 	return commandBuilder.toJSON()
-})
+}) */
+
+const commands = commandFiles.reduce((acc, file) => {
+	const { commandBuilder, dev: devCommand } = require(`./commands/${file}`)
+	if (IS_DEV || !devCommand) {
+		acc.push(commandBuilder.toJSON())
+	}
+	return acc
+}, [])
 
 console.log(commands)
 
