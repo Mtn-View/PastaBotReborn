@@ -4,6 +4,8 @@ const auth = require('./auth.json')
 const { prefix, guildId } = require('./config.json')
 const db = require('./tools/db')
 
+const IS_DEV = process.argv[2] === 'dev'
+
 const intents = new Discord.Intents([ 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MEMBERS' ])
 // Initialize Discord Bot client
 const client = new Discord.Client({ intents })
@@ -13,7 +15,7 @@ const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('
 
 for (const file of commandFiles) {
 	const command = require(`./commands/${file}`)
-	if (!command.disabled) {
+	if (IS_DEV || !command.dev) {
 		client.commands.set(command.name, command)
 	}
 }
@@ -25,7 +27,7 @@ db.initializeDatabase().then(() => console.log("Initialized database"))
 client.once('ready', () => {
 	console.log('Connected')
 	console.log(`Logged in as: ${client.user.tag}`)
-	if (process.argv[2] === 'dev') {
+	if (IS_DEV) {
 		client.user.setPresence({
 			status: 'dnd',
 			activities: [ {

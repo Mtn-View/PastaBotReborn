@@ -61,7 +61,7 @@ async function getNextId() {
 module.exports = {
 	name,
 	description,
-	disabled: true,
+	dev: true,
 	async execute(interaction) {
 		// Save poll in 'pending' state
 		const { lastID: pollId } = await db.doUpdate(`INSERT INTO Schedule (status) VALUES (0);`)

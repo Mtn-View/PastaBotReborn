@@ -216,6 +216,7 @@ function backupSecretJSON(writePath) {
 module.exports = {
 	name,
 	description,
+	dev: true,
 	subcommandDescription: {
 		draw: 'Draw a secret from the deck.',
 		redraw: 'Return all of your secrets to the deck, and draw a new one.',

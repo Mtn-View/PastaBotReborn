@@ -6,6 +6,7 @@ const description = 'I am testing the buttons'
 module.exports = {
 	name,
 	description,
+	dev: true,
 	async execute(interaction) {
 		const rows = [
 			new MessageActionRow()
