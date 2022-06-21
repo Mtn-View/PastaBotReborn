@@ -3,8 +3,10 @@ const fs = require('fs')
 const dbPath = 'database'
 
 const tableInitQueryMap = new Map([
-	[ 'Rolls', `CREATE TABLE Rolls (
-		userId INTEGER,
+	[
+		'Rolls',
+		`CREATE TABLE Rolls (
+		userId INTEGER PRIMARY KEY,
 		data BLOB,
 		timestamp BLOB,
 		guildId INTEGER

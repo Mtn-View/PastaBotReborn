@@ -133,7 +133,7 @@ async function getStatsForMessage({ verbose, name, user, guildId }) {
 
 async function getRollxdyForMessage({ verbose, name, x, y, user, guildId }) {
 	const { rolls, total } = rollxdy(x, y)
-	const res = await logRolltoDb(user.id, JSON.stringify({ rolls, total, guildId }))
+	const res = await logRolltoDb({ userId: user.id, data: JSON.stringify({ rolls, total }, guildId) })
 
 	if (verbose) {
 		return `${x}d${y} ${name ? `(${name}) ` : ''}= ${rolls.join(' + ')} = **${total}**`
