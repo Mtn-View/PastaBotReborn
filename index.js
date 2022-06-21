@@ -4,7 +4,7 @@ const auth = require('./auth.json')
 const { prefix, guildId } = require('./config.json')
 const db = require('./tools/db')
 
-const intents = new Discord.Intents([ 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS' ])
+const intents = new Discord.Intents([ 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MEMBERS' ])
 // Initialize Discord Bot client
 const client = new Discord.Client({ intents })
 client.commands = new Discord.Collection()
@@ -13,7 +13,9 @@ const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('
 
 for (const file of commandFiles) {
 	const command = require(`./commands/${file}`)
-	client.commands.set(command.name, command)
+	if (!command.disabled) {
+		client.commands.set(command.name, command)
+	}
 }
 
 //Login, yee haw
@@ -26,19 +28,19 @@ client.once('ready', () => {
 	if (process.argv[2] === 'dev') {
 		client.user.setPresence({
 			status: 'dnd',
-			activity: {
-				name: 'with the code, expect unstable performance while developing.',
+			activities: [ {
+				name: 'with the code.',
 				type: 'PLAYING',
-			},
+			} ],
 		})
 		console.log("Running in development mode.")
 	} else {
 		client.user.setPresence({
 			status: 'online',
-			activity: {
+			activities: [ {
 				name: 'the call of the void',
 				type: 'LISTENING',
-			},
+			} ],
 		})
 		console.log("Running in production :clown: mode")
 	}
@@ -46,7 +48,8 @@ client.once('ready', () => {
 
 client.on('interactionCreate', async interaction => {
 	interaction.deferReply()
-	if (interaction.type === 'APPLICATION_COMMAND') {
+
+	if (interaction.isCommand()) {
 		const { commandName } = interaction
 		const command = client.commands.get(commandName)
 
@@ -54,7 +57,32 @@ client.on('interactionCreate', async interaction => {
 			return await command.execute(interaction)
 		} catch (error) {
 			console.error(error)
-			return interaction.followUp({ content: 'Error executing command', ephemeral: true })
+			try {
+				return interaction.followUp({ content: 'Error executing command', ephemeral: true })
+			} catch (err) {
+				// Probably just if the message has been followed up already
+				console.error(err)
+			}
 		}
+	} else if (interaction.isMessageComponent()) {
+		const regex = /(\w+)\-(\d+)\-(\w+)/
+		const [ full, commandName, id, type ] = interaction.customId.match(regex)
+		console.log(commandName, id, type)
+		const command = client.commands.get(commandName)
+
+		try {
+			return await command.executeComponent(interaction, id, type)
+		} catch (err) {
+			return interaction.followUp({ content: `Error executing ${type} command`, ephemeral: true })
+		}
+		// return interaction.followUp({ content: `Message component: ${ commandName } ${id } ${type}`, ephemeral: true })
 	}
+
+	/* else if (interaction.isSelectMenu()) {
+		console.log('Select', interaction)
+		return interaction.followUp({ content: `Selected ${interaction.values.toString()}`, ephemeral: true })
+	} else if (interaction.isButton()) {
+		console.log('Button', interaction.component.label, interaction)
+		return interaction.followUp({ content: `${interaction.component.label} button pressed`, ephemeral: true })
+	} */
 })
