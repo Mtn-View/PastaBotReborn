@@ -9,7 +9,7 @@ module.exports = {
 		return await interaction.followUp(`That's pretty pongers, bro.`)
 	},
 	commandBuilder: new SlashCommandBuilder()
-		.setName('ping')
-		.setDescription('Replies with pong!'),
+		.setName(name)
+		.setDescription(description),
 
 }
