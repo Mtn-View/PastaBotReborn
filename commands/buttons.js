@@ -1,5 +1,4 @@
-const { SlashCommandBuilder } = require('@discordjs/builders')
-const { MessageActionRow, MessageButton, MessageSelectMenu } = require('discord.js')
+const { SlashCommandBuilder, MessageActionRow, MessageButton, MessageSelectMenu } = require('discord.js')
 const name = 'button'
 const description = 'I am testing the buttons'
 

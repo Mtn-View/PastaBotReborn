@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('@discordjs/builders')
+const { SlashCommandBuilder } = require('discord.js')
 const name = 'roll'
 const description = 'Roll some dice!'
 const util = require('../util.js')

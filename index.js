@@ -6,7 +6,13 @@ const db = require('./tools/db')
 
 const IS_DEV = process.argv[2] === 'dev'
 
-const intents = new Discord.Intents([ 'GUILD_MESSAGES', 'GUILD_MESSAGE_REACTIONS', 'DIRECT_MESSAGES', 'DIRECT_MESSAGE_REACTIONS', 'GUILD_MEMBERS' ])
+const intents = new Discord.Intents([
+	'GUILD_MESSAGES',
+	'GUILD_MESSAGE_REACTIONS',
+	'DIRECT_MESSAGES',
+	'DIRECT_MESSAGE_REACTIONS',
+	'GUILD_MEMBERS',
+])
 // Initialize Discord Bot client
 const client = new Discord.Client({ intents })
 client.commands = new Discord.Collection()

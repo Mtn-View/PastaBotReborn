@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('@discordjs/builders')
+const { SlashCommandBuilder } = require('discord.js')
 const name = 'secret'
 const description = 'Facilitate drawing "secrets" from a deck.'
 const secretJSONPath = `./secrets/SecretList.json`
