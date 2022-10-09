@@ -6,13 +6,14 @@ const db = require('./tools/db')
 
 const IS_DEV = process.argv[2] === 'dev'
 
-const intents = new Discord.Intents([
-	'GUILD_MESSAGES',
-	'GUILD_MESSAGE_REACTIONS',
-	'DIRECT_MESSAGES',
-	'DIRECT_MESSAGE_REACTIONS',
-	'GUILD_MEMBERS',
-])
+const intents = [
+	Discord.GatewayIntentBits.Guilds,
+	Discord.GatewayIntentBits.GuildMembers,
+	Discord.GatewayIntentBits.GuildMessages,
+	Discord.GatewayIntentBits.GuildMessageReactions,
+	Discord.GatewayIntentBits.DirectMessages,
+	Discord.GatewayIntentBits.DirectMessageReactions,
+]
 // Initialize Discord Bot client
 const client = new Discord.Client({ intents })
 client.commands = new Discord.Collection()
@@ -73,7 +74,7 @@ client.on('interactionCreate', async interaction => {
 			}
 		}
 	} else if (interaction.isMessageComponent()) {
-		const regex = /(\w+)\-(\d+)\-(\w+)/
+		const regex = /(\w+)-(\d+)-(\w+)/
 		const [ full, commandName, id, type ] = interaction.customId.match(regex)
 		console.log(commandName, id, type)
 		const command = client.commands.get(commandName)
