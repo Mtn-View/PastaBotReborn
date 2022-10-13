@@ -14,14 +14,10 @@ const currentClientId = IS_DEV ? clientId : prodClientId
 
 const commandFiles = fs.readdirSync('./commands').filter(file => file.endsWith('.js') && !file.endsWith('_old.js'))
 
-/* const commands = commandFiles.map(file => {
-	const { commandBuilder, dev } = require(`./commands/${file}`)
-	return commandBuilder.toJSON()
-}) */
-
 const commands = commandFiles.reduce((acc, file) => {
-	const { commandBuilder, dev: devCommand } = require(`./commands/${file}`)
+	const { name, commandBuilder, dev: devCommand } = require(`./commands/${file}`)
 	if (IS_DEV || !devCommand) {
+		console.log('Reading command', name)
 		acc.push(commandBuilder.toJSON())
 	}
 	return acc
