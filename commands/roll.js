@@ -159,13 +159,13 @@ module.exports = {
 
 		if (formula === 'stats') {
 			const roll = await getStatsForMessage({ verbose, name, user, guildId: interaction.guildId })
-			return await interaction.followUp({ content: roll }, ephemeral)
+			return await interaction.followUp({ content: roll })
 		} else if (formula.match(xdyRegex)) {
 			const [ x, y ] = formula.split('d')
 			const roll = await getRollxdyForMessage({ verbose, name, x, y, user, guildId: interaction.guildId })
-			return await interaction.followUp({ content: roll }, ephemeral)
+			return await interaction.followUp({ content: roll })
 		} else {
-			return await interaction.followUp({ content: "Invalid formula. It should be either `xdy` (roll a y-sided die x times) or `stats` (roll 4d6d1 * 6)." }, ephemeral)
+			return await interaction.followUp({ content: "Invalid formula. It should be either `xdy` (roll a y-sided die x times) or `stats` (roll 4d6d1 * 6)." })
 		}
 	},
 	commandBuilder: new SlashCommandBuilder()
