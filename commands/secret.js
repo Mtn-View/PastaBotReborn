@@ -200,18 +200,29 @@ module.exports = {
 		const user = interaction.user
 
 		switch (subcommand) {
-			case 'draw':
-				return await interaction.followUp(getSecretForMessage({ user, quantity })) // how to handle multiple secrets? Multiple embeds?
-			case 'redraw':
-				await returnSecretByUserID(user.id)
-				return await interaction.followUp(getSecretForMessage({ user, quantity }))
+			case 'draw': {
+				const getEnabledRes = await setting.getGlobalSettingValue('SECRET_DRAW_ENABLED', 'False', 'BOOLEAN')
+				const getDeckRes = await setting.getGlobalSettingValue('SECRET_ACTIVE_DECK', '', 'STRING')
+				// return await interaction.followUp(getSecretForMessage({ user, quantity })) // how to handle multiple secrets? Multiple embeds?
+				break
+			}
+			case 'redraw': {
+				const getEnabledRes = await setting.getGlobalSettingValue('SECRET_DRAW_ENABLED', 'False', 'BOOLEAN')
+				const getDeckRes = await setting.getGlobalSettingValue('SECRET_ACTIVE_DECK', '', 'STRING')
+				// await returnSecretByUserID(user.id)
+				// return await interaction.followUp(getSecretForMessage({ user, quantity }))
+				break
+			}
 			case 'return': {
 				const returned = await returnSecretByUserID(user.id)
-				return interaction.followUp({ content: `Returned ${returned} secrets to the deck. You have no secrets.` })
+				// return interaction.followUp({ content: `Returned ${returned} secrets to the deck. You have no secrets.` })
+				break
 			}
 			case 'count': {
-				const numSecrets = getNumberSecretsClaimedByAuthor(interaction)
-				return interaction.followUp({ content: `You have ${numSecrets} secrets.` })
+				break
+				// const numSecrets = getNumberSecretsClaimedByAuthor(interaction)
+
+				// return interaction.followUp({ content: `You have ${numSecrets} secrets.` })
 			}
 			case 'disable':
 			case 'enable': {
