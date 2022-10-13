@@ -5,9 +5,9 @@ module.exports = {
 		const query = `SELECT * FROM GlobalSettings WHERE name = '${settingName}';`
 		const res = await db.doQueryFirst(query)
 
-		if (!res && defaultValue && dataType) { // Res will only be falsy if there is no result
+		if (!res) { // Res will only be falsy if there is no result
 			await this.setGlobalSettingValue(settingName, defaultValue, dataType)
-			const { value } = await this.getGlobalSettingValue(settingName, defaultValue, dataType)
+			const value = await this.getGlobalSettingValue(settingName, defaultValue, dataType)
 			return value
 		} else if (res?.type === 'NUMBER') {
 			return Number(res.value)
