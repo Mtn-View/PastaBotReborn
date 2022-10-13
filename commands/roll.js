@@ -148,11 +148,11 @@ async function getRollxdyForMessage({ verbose, name, x, y, user, guildId }) {
 module.exports = {
 	name,
 	description,
+	isEphemeral: interaction => !!interaction?.options?.getBoolean('hidden'),
 	async execute(interaction) {
 		const formula = interaction.options.getString('formula')
 		const name = interaction.options.getString('name')
 		const verbose = interaction.options.getBoolean('verbose')
-		const ephemeral = interaction.options.getBoolean('hidden')
 		const user = interaction.user
 
 		let xdyRegex = /\d+d\d+/

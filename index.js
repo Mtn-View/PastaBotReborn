@@ -56,18 +56,17 @@ client.once('ready', () => {
 })
 
 client.on('interactionCreate', async interaction => {
-	interaction.deferReply()
-
 	if (interaction.isCommand()) {
 		const { commandName } = interaction
 		const command = client.commands.get(commandName)
+		await interaction.deferReply({ ephemeral: !!command?.isEphemeral?.(interaction) })
 
 		try {
 			return await command.execute(interaction)
 		} catch (error) {
 			console.error(error)
 			try {
-				return interaction.followUp({ content: 'Error executing command', ephemeral: true })
+				return interaction.followUp({ content: 'Error executing command' })
 			} catch (err) {
 				// Probably just if the message has been followed up already
 				console.error(err)
@@ -82,10 +81,11 @@ client.on('interactionCreate', async interaction => {
 		try {
 			return await command.executeComponent(interaction, id, type)
 		} catch (err) {
-			return interaction.followUp({ content: `Error executing ${type} command`, ephemeral: true })
+			return interaction.followUp({ content: `Error executing ${type} command` })
 		}
 		// return interaction.followUp({ content: `Message component: ${ commandName } ${id } ${type}`, ephemeral: true })
 	}
+	return interaction.reply({ content: 'Unknown interaction' })
 
 	/* else if (interaction.isSelectMenu()) {
 		console.log('Select', interaction)
