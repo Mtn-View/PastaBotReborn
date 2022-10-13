@@ -68,6 +68,23 @@ const tableInitQueryMap = new Map([
 			PRIMARY KEY("fileId" AUTOINCREMENT)
 		);`,
 	],
+	[
+		'GlobalSettings',
+		`CREATE TABLE "GlobalSettings" (
+			"settingId"	INTEGER NOT NULL UNIQUE,
+			"name"	TEXT NOT NULL UNIQUE,
+			"type"	INTEGER NOT NULL CHECK(type IN('STRING', 'NUMBER', 'BOOLEAN')),
+			"value"	TEXT NOT NULL,
+			PRIMARY KEY("settingId" AUTOINCREMENT)
+		);`,
+	],
+])
+
+const tableDataInitQueryMap = new Map([
+	[
+		'GlobalSettings',
+		`INSERT INTO GlobalSettings (name, type, value) VALUES ('SECRET_DRAW_ENABLED', 'BOOLEAN', '0');`,
+	],
 ])
 /**
  *	Used for when you want to insert/update something and get the ID of the row back
@@ -133,6 +150,7 @@ async function initTablesIfAbsent() {
 		if (res?.name !== table) { // Doesn't exist
 			console.log(`Created table ${table}`)
 			await doQueryFirst(tableInitQueryMap.get(table))
+			await doQueryFirst(tableDataInitQueryMap.get(table))
 			return `${table} created`
 		}
 		return `${table} exists`
