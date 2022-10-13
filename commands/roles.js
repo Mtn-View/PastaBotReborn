@@ -5,6 +5,7 @@ const description = 'Test some roles shit'
 module.exports = {
 	name,
 	description,
+	ephemeral: true,
 	async execute(interaction) {
 		const role = interaction.options.getRole('role')
 		const members = await interaction.guild.members.fetch({ force: true, time: 10000 })
