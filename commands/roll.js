@@ -19,7 +19,7 @@ async function logRolltoDb({ userId, guildId, data }) {
 }
 
 function roll1dx(x) {
-	return Math.ceil(Math.random() * x)
+	return crypto.randomInt(1, x + 1)
 }
 function rollxdy(x, y) { //will return array of rolls and total in an object
 	let rolls = new Array()
