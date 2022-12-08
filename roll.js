@@ -3,6 +3,7 @@ const rollJsonPath = `./rolls/rolls.json`
 const rollTemplateJsonPath = `./rolls/rolls_template.json`
 const fs = require('fs')
 const bot = require('./bot.js')
+const crypto = require("crypto")
 
 var methods = {
 	catchCommand(bot, message, args) {
@@ -60,7 +61,7 @@ var methods = {
 		}
 	},
 	rolldx(x) {
-		return Math.ceil(Math.random() * x)
+		return crypto.randomInt(1, x + 1)
 	},
 	rollxdy(x, y) { //will return array of rolls and sum in an object
 		let rolls = new Array()
