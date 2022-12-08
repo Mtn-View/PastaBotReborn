@@ -5,3 +5,4 @@ config.json
 secrets/*
 !secrets/SecretListBackup_template.json
 rolls/rolls.json
+database
