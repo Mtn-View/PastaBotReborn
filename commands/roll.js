@@ -6,6 +6,7 @@ const rollJsonPath = `./rolls/rolls.json`
 const rollTemplateJsonPath = `./rolls/rolls_template.json`
 const fs = require('fs')
 const db = require('../tools/db')
+const crypto = require('node:crypto')
 
 async function logRolltoDb({ userId, guildId, data }) {
 	const query = `INSERT INTO Rolls (userId, data, timestamp, guildId) VALUES ($userId, $data, $timestamp, $guildId);`
@@ -122,13 +123,16 @@ async function getStatsForMessage({ verbose, name, user, guildId }) {
 	const array = rollArray(6)
 	const res = await logRolltoDb({ userId: user.id, data: JSON.stringify(array), guildId })
 
-	return array.reduce((previousValue, currentValue) => {
+	let totalTotal = 0
+
+	return `${array.reduce((previousValue, currentValue) => {
 		const { total, rolls, dropped } = currentValue
+		totalTotal += total
 		if (verbose) {
 			return previousValue.concat(`**${total}** = ${rolls.join(' + ')} (dropped ${dropped})\n`)
 		}
 		return previousValue.concat(`**${total}** `)
-	}, `${user.toString()} here are your ${verbose ? 'verbose ' : ''}${name ? `'${name}' ` : ''}stats\n`)
+	}, `${user.toString()} here are your ${verbose ? 'verbose ' : ''}${name ? `'${name}' ` : ''}stats\n`) }\n**Total:** ${totalTotal}`
 }
 
 async function getRollxdyForMessage({ verbose, name, x, y, user, guildId }) {
